@@ -139,29 +139,50 @@ export const fetchCreationsFromCloudinary = async () => {
   console.log('🔍 Checking for creations...');
 
   try {
-    // Try the public list API
-    const listUrl = `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`;
-    console.log('Trying Cloudinary list API...');
+    console.log('🔍 Trying serverless API endpoint...');
     
-    const response = await fetch(listUrl, {
+    // Try our serverless function first (most reliable)
+    let response = await fetch('/api/cloudinary-search', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+
+    console.log('Serverless API response:', response.status);
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ SUCCESS! Got data from serverless API:', data.creations?.length || 0, 'creations');
+      
+      // Update UI status
+      updateSyncStatus('synced', '🌐 Cross-device sync active! Creations sync across all your devices.');
+      
+      return data.creations || [];
+    }
+
+    // Fallback to direct Cloudinary API
+    console.log('Serverless API failed, trying direct Cloudinary API...');
+    
+    const listUrl = `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`;
+    response = await fetch(listUrl, {
       method: 'GET',
       mode: 'cors',
       headers: {
         'Accept': 'application/json',
       }
     });
-
-    console.log('Cloudinary API response:', response.status);
+    
+    console.log('Direct Cloudinary API response:', response.status);
     
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ SUCCESS! Got data from Cloudinary:', data.resources?.length || 0, 'images');
+      console.log('✅ SUCCESS! Got data from direct Cloudinary API:', data.resources?.length || 0, 'images');
       
-      // Parse creation data from public_id structure
+      // Parse creation data from public_id structure  
       const creationsMap = new Map();
       
       for (const photo of data.resources || []) {
-        // Extract creation info from public_id: lego-creations/creationId/name-timestamp
         const publicIdParts = photo.public_id.split('/');
         if (publicIdParts.length >= 3) {
           const creationId = publicIdParts[1];
@@ -192,31 +213,15 @@ export const fetchCreationsFromCloudinary = async () => {
       const creations = Array.from(creationsMap.values())
         .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
         
-      console.log('✅ CROSS-DEVICE SYNC WORKING! Processed', creations.length, 'creations from Cloudinary');
-      
-      // Update UI status
+      console.log('✅ CROSS-DEVICE SYNC WORKING! Processed', creations.length, 'creations');
       updateSyncStatus('synced', '🌐 Cross-device sync active! Creations sync across all your devices.');
-      
-      // Also cache the data locally as backup
-      if (creations.length > 0) {
-        try {
-          localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(creations));
-          console.log('💾 Also cached data locally as backup');
-        } catch (e) {
-          console.warn('Could not cache data locally:', e);
-        }
-      }
       
       return creations;
     }
     
-    // If API fails, use cache
-    console.warn('❌ Cloudinary API returned', response.status, '- using local cache instead');
-    console.log('📱 LOCAL-ONLY MODE: Creations will only be visible on this device');
-    
-    // Update UI status
-    updateSyncStatus('local-only', '📱 Local-only mode: Creations are stored on this device only. Cross-device sync unavailable.');
-    
+    // Both APIs failed, use cache
+    console.warn('❌ All APIs failed - using local cache');
+    updateSyncStatus('local-only', '📱 Local-only mode: Creations are stored on this device only.');
     return getCachedCreations();
       
   } catch (error) {
