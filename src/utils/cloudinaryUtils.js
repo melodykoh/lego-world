@@ -80,6 +80,8 @@ export const cacheCreationMetadata = (creationData) => {
     }
     
     localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(cached));
+    console.log('✅ Cached creation metadata:', creationData);
+    console.log('📦 Total cached creations:', cached.length);
   } catch (error) {
     console.error('Error caching creation metadata:', error);
   }
