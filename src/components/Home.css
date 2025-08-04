@@ -242,20 +242,36 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.local-storage-notice {
-  background: #f0f8ff;
-  border: 1px solid #b8daff;
+.sync-status-notice {
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 2rem;
   text-align: center;
+  transition: all 0.3s ease;
 }
 
-.local-storage-notice p {
+.sync-status-notice p {
   margin: 0;
-  color: #004085;
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+.sync-status-notice.checking {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+.sync-status-notice.synced {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.sync-status-notice.local-only {
+  background: #f0f8ff;
+  border: 1px solid #b8daff;
+  color: #004085;
 }
 
 .stats-grid {

@@ -1,5 +1,14 @@
 import CryptoJS from 'crypto-js';
 
+// Update sync status in UI
+const updateSyncStatus = (status, message) => {
+  const element = document.getElementById('sync-status');
+  if (element) {
+    element.className = `sync-status-notice ${status}`;
+    element.innerHTML = `<p>${message}</p>`;
+  }
+};
+
 // Cloudinary upload utility
 export const uploadToCloudinary = async (file, metadata = {}) => {
   const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
@@ -118,7 +127,7 @@ const generateSignature = (params, apiSecret) => {
   return CryptoJS.HmacSHA1(sortedParams, apiSecret).toString();
 };
 
-// Fetch creations using CORS-friendly approach
+// Fetch creations - try Cloudinary API first, fallback to cache
 export const fetchCreationsFromCloudinary = async () => {
   const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
   
@@ -127,12 +136,12 @@ export const fetchCreationsFromCloudinary = async () => {
     return getCachedCreations();
   }
 
-  console.log('Trying CORS-friendly Cloudinary approaches...');
+  console.log('🔍 Checking for creations...');
 
   try {
-    // Try the public list API with proper CORS handling
+    // Try the public list API
     const listUrl = `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`;
-    console.log('Trying public list API:', listUrl);
+    console.log('Trying Cloudinary list API...');
     
     const response = await fetch(listUrl, {
       method: 'GET',
@@ -142,11 +151,11 @@ export const fetchCreationsFromCloudinary = async () => {
       }
     });
 
-    console.log('Public list API response:', response.status);
+    console.log('Cloudinary API response:', response.status);
     
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Got data from public list API:', data);
+      console.log('✅ SUCCESS! Got data from Cloudinary:', data.resources?.length || 0, 'images');
       
       // Parse creation data from public_id structure
       const creationsMap = new Map();
@@ -183,16 +192,40 @@ export const fetchCreationsFromCloudinary = async () => {
       const creations = Array.from(creationsMap.values())
         .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
         
-      console.log('✅ Processed creations from public API:', creations);
+      console.log('✅ CROSS-DEVICE SYNC WORKING! Processed', creations.length, 'creations from Cloudinary');
+      
+      // Update UI status
+      updateSyncStatus('synced', '🌐 Cross-device sync active! Creations sync across all your devices.');
+      
+      // Also cache the data locally as backup
+      if (creations.length > 0) {
+        try {
+          localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(creations));
+          console.log('💾 Also cached data locally as backup');
+        } catch (e) {
+          console.warn('Could not cache data locally:', e);
+        }
+      }
+      
       return creations;
     }
     
-    console.warn('Public API failed, using cached data');
+    // If API fails, use cache
+    console.warn('❌ Cloudinary API returned', response.status, '- using local cache instead');
+    console.log('📱 LOCAL-ONLY MODE: Creations will only be visible on this device');
+    
+    // Update UI status
+    updateSyncStatus('local-only', '📱 Local-only mode: Creations are stored on this device only. Cross-device sync unavailable.');
+    
     return getCachedCreations();
       
   } catch (error) {
-    console.error('Error fetching from public API:', error);
-    console.log('📦 Falling back to cached data');
+    console.error('❌ Error fetching from Cloudinary API:', error.message);
+    console.log('📱 LOCAL-ONLY MODE: Creations will only be visible on this device');
+    
+    // Update UI status
+    updateSyncStatus('local-only', '📱 Local-only mode: Creations are stored on this device only. Cross-device sync unavailable.');
+    
     return getCachedCreations();
   }
 };
