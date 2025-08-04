@@ -73,6 +73,9 @@ function Home({ creations, onNavigateToGallery, onNavigateToUpload, onViewCreati
 
       <div className="lego-separator"></div>
       <div className="stats-section">
+        <div className="local-storage-notice">
+          <p>💡 <strong>Note:</strong> Photos are stored locally on this device only. Creations uploaded on other devices won't appear here.</p>
+        </div>
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-number">{creations.length}</div>

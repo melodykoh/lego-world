@@ -15,7 +15,16 @@ function App() {
     const savedCreations = localStorage.getItem('aidens-lego-creations');
     if (savedCreations) {
       try {
-        setLegoCreations(JSON.parse(savedCreations));
+        const parsed = JSON.parse(savedCreations);
+        // Clean up any broken blob URLs from old version
+        const cleanedCreations = parsed.map(creation => ({
+          ...creation,
+          photos: creation.photos.filter(photo => 
+            photo.url && photo.url.startsWith('data:')
+          )
+        })).filter(creation => creation.photos.length > 0);
+        
+        setLegoCreations(cleanedCreations);
       } catch (error) {
         console.error('Error loading saved creations:', error);
       }
