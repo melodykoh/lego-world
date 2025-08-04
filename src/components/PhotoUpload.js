@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './PhotoUpload.css';
 import { compressImage } from '../utils/imageUtils';
-import { uploadToCloudinary } from '../utils/cloudinaryUtils';
+import { uploadToCloudinary, cacheCreationMetadata } from '../utils/cloudinaryUtils';
 
 function PhotoUpload({ onAddCreation }) {
   const [creationName, setCreationName] = useState('');
@@ -174,21 +174,30 @@ function PhotoUpload({ onAddCreation }) {
 
     const photos = previews.map(preview => ({
       url: preview.url,
-      name: preview.name
+      name: preview.name,
+      publicId: preview.publicId,
+      width: preview.width,
+      height: preview.height
     }));
 
-    console.log('Calling onAddCreation with:', {
+    // Get the creation ID from the first uploaded photo
+    const firstPhoto = previews[0];
+    const actualCreationId = firstPhoto?.creationId || Date.now().toString();
+    
+    const creationData = {
+      id: actualCreationId,
       name: creationName.trim(),
       photos,
       dateAdded: new Date().toISOString()
-    });
+    };
+
+    console.log('Calling onAddCreation with:', creationData);
 
     try {
-      onAddCreation({
-        name: creationName.trim(),
-        photos,
-        dateAdded: new Date().toISOString()
-      });
+      // Cache the creation metadata for persistence
+      cacheCreationMetadata(creationData);
+      
+      onAddCreation(creationData);
 
       // Clear form after successful submission
       setCreationName('');

@@ -64,7 +64,28 @@ export const getOptimizedImageUrl = (publicId, options = {}) => {
   return `https://res.cloudinary.com/${cloudName}/image/upload/w_${width},h_${height},q_${quality},f_${format}/${publicId}`;
 };
 
-// Fetch all creations from Cloudinary
+// Store creation metadata locally as backup
+const CREATIONS_CACHE_KEY = 'cloudinary-creations-cache';
+
+// Cache creation data when uploading
+export const cacheCreationMetadata = (creationData) => {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
+    const existingIndex = cached.findIndex(c => c.id === creationData.id);
+    
+    if (existingIndex >= 0) {
+      cached[existingIndex] = creationData;
+    } else {
+      cached.push(creationData);
+    }
+    
+    localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(cached));
+  } catch (error) {
+    console.error('Error caching creation metadata:', error);
+  }
+};
+
+// Fetch all creations from Cloudinary (with fallback to cache)
 export const fetchCreationsFromCloudinary = async () => {
   const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
   
@@ -73,54 +94,71 @@ export const fetchCreationsFromCloudinary = async () => {
   }
 
   try {
-    // Use Cloudinary's search API
+    // Try Cloudinary's list API first
     const response = await fetch(
       `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`
     );
 
-    if (!response.ok) {
-      console.warn('Cloudinary search not available, using empty state');
-      return [];
-    }
-
-    const data = await response.json();
+    console.log('Cloudinary list API response status:', response.status);
     
-    // Group photos by creation using tags
-    const creationsMap = new Map();
-    
-    for (const photo of data.resources || []) {
-      // Find creation ID from tags
-      const creationTag = photo.tags?.find(tag => tag.startsWith('creation-'));
-      if (!creationTag) continue;
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Cloudinary data received:', data);
       
-      const creationId = creationTag.replace('creation-', '');
-      const context = photo.context || {};
+      // Group photos by creation using tags
+      const creationsMap = new Map();
       
-      if (!creationsMap.has(creationId)) {
-        creationsMap.set(creationId, {
-          id: creationId,
-          name: context.creationName || 'Untitled Creation',
-          dateAdded: context.dateAdded || new Date().toISOString(),
-          photos: []
+      for (const photo of data.resources || []) {
+        // Find creation ID from tags
+        const creationTag = photo.tags?.find(tag => tag.startsWith('creation-'));
+        if (!creationTag) continue;
+        
+        const creationId = creationTag.replace('creation-', '');
+        const context = photo.context || {};
+        
+        if (!creationsMap.has(creationId)) {
+          creationsMap.set(creationId, {
+            id: creationId,
+            name: context.creationName || 'Untitled Creation',
+            dateAdded: context.dateAdded || new Date().toISOString(),
+            photos: []
+          });
+        }
+        
+        const creation = creationsMap.get(creationId);
+        creation.photos.push({
+          url: photo.secure_url,
+          publicId: photo.public_id,
+          name: photo.original_filename || 'photo',
+          width: photo.width,
+          height: photo.height
         });
       }
       
-      const creation = creationsMap.get(creationId);
-      creation.photos.push({
-        url: photo.secure_url,
-        publicId: photo.public_id,
-        name: photo.original_filename || 'photo',
-        width: photo.width,
-        height: photo.height
-      });
+      // Convert map to array and sort by date
+      const creations = Array.from(creationsMap.values())
+        .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+        
+      console.log('Processed creations from Cloudinary:', creations);
+      return creations;
     }
     
-    // Convert map to array and sort by date
-    return Array.from(creationsMap.values())
-      .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+    // Fallback to cached metadata
+    console.warn('Cloudinary list API not available, using cached metadata');
+    const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
+    return cached.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
       
   } catch (error) {
     console.error('Error fetching creations from Cloudinary:', error);
-    return [];
+    
+    // Fallback to cached metadata
+    try {
+      const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
+      console.log('Using cached creations as fallback:', cached);
+      return cached.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+    } catch (cacheError) {
+      console.error('Error reading cached creations:', cacheError);
+      return [];
+    }
   }
 };
