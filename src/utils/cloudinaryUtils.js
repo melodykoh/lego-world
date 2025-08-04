@@ -1,3 +1,5 @@
+import CryptoJS from 'crypto-js';
+
 // Cloudinary upload utility
 export const uploadToCloudinary = async (file, metadata = {}) => {
   const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
@@ -12,9 +14,16 @@ export const uploadToCloudinary = async (file, metadata = {}) => {
   formData.append('upload_preset', uploadPreset);
   formData.append('folder', 'lego-creations');
   
-  // Add metadata as tags and context
+  // Add metadata as tags and public_id for cross-device access
   if (metadata.creationId) {
     formData.append('tags', `creation-${metadata.creationId}`);
+  }
+  
+  // Encode creation name in public_id for easy retrieval
+  if (metadata.creationName && metadata.creationId) {
+    const safeName = metadata.creationName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+    const publicId = `lego-creations/${metadata.creationId}/${safeName}-${Date.now()}`;
+    formData.append('public_id', publicId);
   }
   
   if (metadata.creationName || metadata.dateAdded) {
@@ -67,6 +76,18 @@ export const getOptimizedImageUrl = (publicId, options = {}) => {
 // Store creation metadata locally as backup
 const CREATIONS_CACHE_KEY = 'cloudinary-creations-cache';
 
+// Get cached creations
+const getCachedCreations = () => {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
+    console.log('Using cached creations:', cached.length);
+    return cached.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+  } catch (error) {
+    console.error('Error reading cached creations:', error);
+    return [];
+  }
+};
+
 // Cache creation data when uploading
 export const cacheCreationMetadata = (creationData) => {
   try {
@@ -87,100 +108,91 @@ export const cacheCreationMetadata = (creationData) => {
   }
 };
 
-// Fetch all creations from Cloudinary (with fallback to cache)
+// Create proper HMAC-SHA1 signature for Cloudinary
+const generateSignature = (params, apiSecret) => {
+  const sortedParams = Object.keys(params)
+    .sort()
+    .map(key => `${key}=${params[key]}`)
+    .join('&');
+  
+  return CryptoJS.HmacSHA1(sortedParams, apiSecret).toString();
+};
+
+// Fetch creations using CORS-friendly approach
 export const fetchCreationsFromCloudinary = async () => {
   const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
   
   if (!cloudName) {
-    throw new Error('Cloudinary cloud name missing');
+    console.warn('Cloud name missing, using cached data');
+    return getCachedCreations();
   }
 
+  console.log('Trying CORS-friendly Cloudinary approaches...');
+
   try {
-    // Try multiple Cloudinary APIs
-    const urls = [
-      `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`,
-      `https://res.cloudinary.com/${cloudName}/image/search/folder:lego-creations.json`,
-      `https://api.cloudinary.com/v1_1/${cloudName}/resources/search`
-    ];
+    // Try the public list API with proper CORS handling
+    const listUrl = `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`;
+    console.log('Trying public list API:', listUrl);
     
-    let response = null;
-    let workingUrl = null;
-    
-    for (const url of urls) {
-      try {
-        console.log('Trying Cloudinary API:', url);
-        response = await fetch(url);
-        console.log('Response status:', response.status);
-        
-        if (response.ok) {
-          workingUrl = url;
-          break;
-        }
-      } catch (err) {
-        console.log('Failed to fetch from:', url, err.message);
-        continue;
+    const response = await fetch(listUrl, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
       }
-    }
+    });
+
+    console.log('Public list API response:', response.status);
     
-    if (response && response.ok) {
-      console.log('Successfully fetched from:', workingUrl);
+    if (response.ok) {
       const data = await response.json();
-      console.log('Cloudinary data received:', data);
+      console.log('✅ Got data from public list API:', data);
       
-      // Group photos by creation using tags
+      // Parse creation data from public_id structure
       const creationsMap = new Map();
       
       for (const photo of data.resources || []) {
-        // Find creation ID from tags
-        const creationTag = photo.tags?.find(tag => tag.startsWith('creation-'));
-        if (!creationTag) continue;
-        
-        const creationId = creationTag.replace('creation-', '');
-        const context = photo.context || {};
-        
-        if (!creationsMap.has(creationId)) {
-          creationsMap.set(creationId, {
-            id: creationId,
-            name: context.creationName || 'Untitled Creation',
-            dateAdded: context.dateAdded || new Date().toISOString(),
-            photos: []
+        // Extract creation info from public_id: lego-creations/creationId/name-timestamp
+        const publicIdParts = photo.public_id.split('/');
+        if (publicIdParts.length >= 3) {
+          const creationId = publicIdParts[1];
+          const nameTimestamp = publicIdParts[2];
+          const nameParts = nameTimestamp.split('-');
+          const creationName = nameParts.slice(0, -1).join('-').replace(/-/g, ' ');
+          
+          if (!creationsMap.has(creationId)) {
+            creationsMap.set(creationId, {
+              id: creationId,
+              name: creationName || 'Untitled Creation',
+              dateAdded: new Date(photo.created_at || Date.now()).toISOString(),
+              photos: []
+            });
+          }
+          
+          const creation = creationsMap.get(creationId);
+          creation.photos.push({
+            url: photo.secure_url,
+            publicId: photo.public_id,
+            name: photo.original_filename || 'photo',
+            width: photo.width,
+            height: photo.height
           });
         }
-        
-        const creation = creationsMap.get(creationId);
-        creation.photos.push({
-          url: photo.secure_url,
-          publicId: photo.public_id,
-          name: photo.original_filename || 'photo',
-          width: photo.width,
-          height: photo.height
-        });
       }
       
-      // Convert map to array and sort by date
       const creations = Array.from(creationsMap.values())
         .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
         
-      console.log('Processed creations from Cloudinary:', creations);
+      console.log('✅ Processed creations from public API:', creations);
       return creations;
     }
     
-    // Fallback to cached metadata
-    console.warn('Cloudinary list API not available, using cached metadata');
-    const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
-    return cached.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+    console.warn('Public API failed, using cached data');
+    return getCachedCreations();
       
   } catch (error) {
-    console.error('Error fetching creations from Cloudinary:', error);
-    
-    // Fallback to cached metadata
-    try {
-      const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
-      console.log('Using cached creations as fallback:', cached);
-      return cached.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
-    } catch (cacheError) {
-      console.error('Error reading cached creations:', cacheError);
-      return [];
-    }
+    console.error('Error fetching from public API:', error);
+    console.log('📦 Falling back to cached data');
+    return getCachedCreations();
   }
 };
