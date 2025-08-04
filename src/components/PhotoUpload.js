@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import './PhotoUpload.css';
 import { compressImage } from '../utils/imageUtils';
+import { uploadToCloudinary } from '../utils/cloudinaryUtils';
 
 function PhotoUpload({ onAddCreation }) {
   const [creationName, setCreationName] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
   const [errors, setErrors] = useState([]);
 
   // File validation constants
@@ -76,24 +78,51 @@ function PhotoUpload({ onAddCreation }) {
     const allFiles = [...selectedFiles, ...validFiles];
     setSelectedFiles(allFiles);
     setIsProcessing(true);
+    setUploadStatus(`Uploading ${validFiles.length} photo${validFiles.length > 1 ? 's' : ''}...`);
+
+    // Create unique creation ID for this entire creation
+    const creationId = Date.now().toString();
+    const creationData = {
+      creationId,
+      creationName: creationName.trim(),
+      dateAdded: new Date().toISOString()
+    };
 
     try {
       const newPreviews = await Promise.all(
-        validFiles.map(async (file) => {
+        validFiles.map(async (file, index) => {
+          setUploadStatus(`Uploading photo ${index + 1} of ${validFiles.length}...`);
           const compressedFile = await compressImage(file);
           
-          // Convert to base64 for persistent storage
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              resolve({
-                file: compressedFile,
-                url: e.target.result, // This is a base64 data URL
-                name: file.name
-              });
+          try {
+            // Upload to Cloudinary with shared creation metadata
+            const cloudinaryResponse = await uploadToCloudinary(compressedFile, creationData);
+            
+            return {
+              file: compressedFile,
+              url: cloudinaryResponse.url,
+              publicId: cloudinaryResponse.publicId,
+              name: file.name,
+              width: cloudinaryResponse.width,
+              height: cloudinaryResponse.height,
+              creationId
             };
-            reader.readAsDataURL(compressedFile);
-          });
+          } catch (uploadError) {
+            console.error('Failed to upload to Cloudinary:', uploadError);
+            // Fallback to base64 if Cloudinary fails
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                resolve({
+                  file: compressedFile,
+                  url: e.target.result,
+                  name: file.name,
+                  isLocal: true // Mark as local fallback
+                });
+              };
+              reader.readAsDataURL(compressedFile);
+            });
+          }
         })
       );
       setPreviews(prev => [...prev, ...newPreviews]);
@@ -102,6 +131,7 @@ function PhotoUpload({ onAddCreation }) {
       setErrors(prev => [...prev, 'Error processing some images. Please try again.']);
     } finally {
       setIsProcessing(false);
+      setUploadStatus('');
     }
     
     // Clear the input so the same file can be selected again if needed
@@ -209,7 +239,7 @@ function PhotoUpload({ onAddCreation }) {
               className="file-input"
             />
             <label htmlFor="photos" className={`file-input-label ${errors.length > 0 ? 'error' : ''}`}>
-              {isProcessing ? '⏳ Processing...' : '📷 Choose Multiple Photos'}
+              {isProcessing ? `⏳ ${uploadStatus || 'Processing...'}` : '📷 Choose Multiple Photos'}
             </label>
             <div className="file-requirements">
               <p className="requirements-text">

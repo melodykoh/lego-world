@@ -4,6 +4,7 @@ import Home from './components/Home';
 import PhotoUpload from './components/PhotoUpload';
 import PhotoGallery from './components/PhotoGallery';
 import CreationView from './components/CreationView';
+import { fetchCreationsFromCloudinary } from './utils/cloudinaryUtils';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
@@ -12,32 +13,60 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    const savedCreations = localStorage.getItem('aidens-lego-creations');
-    if (savedCreations) {
+    const loadCreations = async () => {
       try {
-        const parsed = JSON.parse(savedCreations);
-        // Clean up any broken blob URLs from old version
-        const cleanedCreations = parsed.map(creation => ({
-          ...creation,
-          photos: creation.photos.filter(photo => 
-            photo.url && photo.url.startsWith('data:')
-          )
-        })).filter(creation => creation.photos.length > 0);
+        // Try to load from Cloudinary first
+        const cloudinaryCreations = await fetchCreationsFromCloudinary();
         
-        setLegoCreations(cleanedCreations);
+        if (cloudinaryCreations.length > 0) {
+          setLegoCreations(cloudinaryCreations);
+          return;
+        }
+        
+        // Fallback to localStorage for migration
+        const savedCreations = localStorage.getItem('aidens-lego-creations');
+        if (savedCreations) {
+          const parsed = JSON.parse(savedCreations);
+          // Clean up broken blob URLs and accept both cloud and base64 URLs
+          const cleanedCreations = parsed.map(creation => ({
+            ...creation,
+            photos: creation.photos.filter(photo => 
+              photo.url && (
+                photo.url.startsWith('data:') || // Base64 (local)
+                photo.url.startsWith('https://res.cloudinary.com/') || // Cloudinary
+                photo.url.startsWith('https://') // Other cloud URLs
+              )
+            )
+          })).filter(creation => creation.photos.length > 0);
+          
+          setLegoCreations(cleanedCreations);
+        }
       } catch (error) {
-        console.error('Error loading saved creations:', error);
+        console.error('Error loading creations:', error);
+        setLegoCreations([]);
       }
-    }
+    };
+    
+    loadCreations();
   }, []);
 
   useEffect(() => {
     localStorage.setItem('aidens-lego-creations', JSON.stringify(legoCreations));
   }, [legoCreations]);
 
-  const addCreation = (newCreation) => {
-    setLegoCreations(prev => [...prev, { ...newCreation, id: Date.now() }]);
-    setCurrentView('gallery');
+  const addCreation = async (newCreation) => {
+    // Photos are already uploaded to Cloudinary by PhotoUpload component
+    // Just refresh the list from Cloudinary to show the new creation
+    try {
+      const updatedCreations = await fetchCreationsFromCloudinary();
+      setLegoCreations(updatedCreations);
+      setCurrentView('gallery');
+    } catch (error) {
+      console.error('Error refreshing creations after upload:', error);
+      // Fallback: add to current list (but won't persist on refresh)
+      setLegoCreations(prev => [...prev, { ...newCreation, id: Date.now() }]);
+      setCurrentView('gallery');
+    }
   };
 
   const viewCreation = (creation) => {
