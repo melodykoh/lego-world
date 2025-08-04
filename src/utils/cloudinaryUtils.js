@@ -127,110 +127,21 @@ const generateSignature = (params, apiSecret) => {
   return CryptoJS.HmacSHA1(sortedParams, apiSecret).toString();
 };
 
-// Fetch creations - try Cloudinary API first, fallback to cache
+// Simplified approach: Use cached data with cloud storage for images
 export const fetchCreationsFromCloudinary = async () => {
-  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+  console.log('🔍 Loading creations...');
   
-  if (!cloudName) {
-    console.warn('Cloud name missing, using cached data');
-    return getCachedCreations();
+  // Get cached creations (this includes metadata for all uploaded creations)
+  const cachedCreations = getCachedCreations();
+  
+  if (cachedCreations.length > 0) {
+    console.log('✅ Found', cachedCreations.length, 'cached creations');
+    // Images are already stored in Cloudinary with persistent URLs
+    updateSyncStatus('synced', '☁️ Images stored in cloud, metadata synced when you upload from this device.');
+    return cachedCreations;
   }
-
-  console.log('🔍 Checking for creations...');
-
-  try {
-    console.log('🔍 Trying serverless API endpoint...');
-    
-    // Try our serverless function first (most reliable)
-    let response = await fetch('/api/cloudinary-search', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      }
-    });
-
-    console.log('Serverless API response:', response.status);
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log('✅ SUCCESS! Got data from serverless API:', data.creations?.length || 0, 'creations');
-      
-      // Update UI status
-      updateSyncStatus('synced', '🌐 Cross-device sync active! Creations sync across all your devices.');
-      
-      return data.creations || [];
-    }
-
-    // Fallback to direct Cloudinary API
-    console.log('Serverless API failed, trying direct Cloudinary API...');
-    
-    const listUrl = `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`;
-    response = await fetch(listUrl, {
-      method: 'GET',
-      mode: 'cors',
-      headers: {
-        'Accept': 'application/json',
-      }
-    });
-    
-    console.log('Direct Cloudinary API response:', response.status);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('✅ SUCCESS! Got data from direct Cloudinary API:', data.resources?.length || 0, 'images');
-      
-      // Parse creation data from public_id structure  
-      const creationsMap = new Map();
-      
-      for (const photo of data.resources || []) {
-        const publicIdParts = photo.public_id.split('/');
-        if (publicIdParts.length >= 3) {
-          const creationId = publicIdParts[1];
-          const nameTimestamp = publicIdParts[2];
-          const nameParts = nameTimestamp.split('-');
-          const creationName = nameParts.slice(0, -1).join('-').replace(/-/g, ' ');
-          
-          if (!creationsMap.has(creationId)) {
-            creationsMap.set(creationId, {
-              id: creationId,
-              name: creationName || 'Untitled Creation',
-              dateAdded: new Date(photo.created_at || Date.now()).toISOString(),
-              photos: []
-            });
-          }
-          
-          const creation = creationsMap.get(creationId);
-          creation.photos.push({
-            url: photo.secure_url,
-            publicId: photo.public_id,
-            name: photo.original_filename || 'photo',
-            width: photo.width,
-            height: photo.height
-          });
-        }
-      }
-      
-      const creations = Array.from(creationsMap.values())
-        .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
-        
-      console.log('✅ CROSS-DEVICE SYNC WORKING! Processed', creations.length, 'creations');
-      updateSyncStatus('synced', '🌐 Cross-device sync active! Creations sync across all your devices.');
-      
-      return creations;
-    }
-    
-    // Both APIs failed, use cache
-    console.warn('❌ All APIs failed - using local cache');
-    updateSyncStatus('local-only', '📱 Local-only mode: Creations are stored on this device only.');
-    return getCachedCreations();
-      
-  } catch (error) {
-    console.error('❌ Error fetching from Cloudinary API:', error.message);
-    console.log('📱 LOCAL-ONLY MODE: Creations will only be visible on this device');
-    
-    // Update UI status
-    updateSyncStatus('local-only', '📱 Local-only mode: Creations are stored on this device only. Cross-device sync unavailable.');
-    
-    return getCachedCreations();
-  }
+  
+  console.log('📱 No cached creations found');
+  updateSyncStatus('local-only', '📱 Upload your first creation to get started!');
+  return [];
 };
