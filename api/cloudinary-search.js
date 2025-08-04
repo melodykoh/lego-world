@@ -27,59 +27,80 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Generate signature for authenticated request
-    const timestamp = Math.round(Date.now() / 1000);
-    const params = {
-      expression: 'folder:lego-creations',
-      with_field: 'context,tags',
-      max_results: 100,
-      sort_by: 'created_at',
-      timestamp: timestamp.toString()
-    };
-
-    // Create signature
-    const sortedParams = Object.keys(params)
-      .sort()
-      .map(key => `${key}=${params[key]}`)
-      .join('&');
-
-    const signature = crypto
-      .createHmac('sha1', apiSecret)
-      .update(sortedParams)
-      .digest('hex');
-
-    // Create form data
-    const formData = new URLSearchParams();
-    Object.keys(params).forEach(key => {
-      formData.append(key, params[key]);
-    });
-    formData.append('api_key', apiKey);
-    formData.append('signature', signature);
-
-    // Call Cloudinary Search API
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/resources/search`,
+    // Try the simpler list API first (if enabled)
+    let response = await fetch(
+      `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`,
       {
-        method: 'POST',
-        body: formData,
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
         },
       }
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Cloudinary API error:', response.status, errorText);
-      res.status(response.status).json({ 
-        error: 'Cloudinary API error', 
-        status: response.status,
-        details: errorText 
-      });
-      return;
-    }
+    let data;
+    
+    if (response.ok) {
+      // Use list API response
+      data = await response.json();
+      console.log('✅ Using list API, found:', data.resources?.length || 0, 'images');
+    } else {
+      // Fallback to authenticated Search API
+      console.log('📋 List API failed, trying Search API...');
+      
+      const timestamp = Math.round(Date.now() / 1000);
+      const params = {
+        expression: 'folder:lego-creations',
+        with_field: 'context,tags',
+        max_results: 100,
+        sort_by: 'created_at',
+        timestamp: timestamp.toString()
+      };
 
-    const data = await response.json();
+      // Create signature
+      const sortedParams = Object.keys(params)
+        .sort()
+        .map(key => `${key}=${params[key]}`)
+        .join('&');
+
+      const signature = crypto
+        .createHmac('sha1', apiSecret)
+        .update(sortedParams)
+        .digest('hex');
+
+      // Create form data
+      const formData = new URLSearchParams();
+      Object.keys(params).forEach(key => {
+        formData.append(key, params[key]);
+      });
+      formData.append('api_key', apiKey);
+      formData.append('signature', signature);
+
+      // Call Cloudinary Search API
+      response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/resources/search`,
+        {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Cloudinary Search API error:', response.status, errorText);
+        res.status(response.status).json({ 
+          error: 'Cloudinary API error', 
+          status: response.status,
+          details: errorText 
+        });
+        return;
+      }
+      
+      data = await response.json();
+    }
 
     // Process the data to match our expected format
     const creationsMap = new Map();
