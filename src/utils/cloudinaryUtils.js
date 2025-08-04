@@ -94,14 +94,34 @@ export const fetchCreationsFromCloudinary = async () => {
   }
 
   try {
-    // Try Cloudinary's list API first
-    const response = await fetch(
-      `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`
-    );
-
-    console.log('Cloudinary list API response status:', response.status);
+    // Try multiple Cloudinary APIs
+    const urls = [
+      `https://res.cloudinary.com/${cloudName}/image/list/lego-creations.json`,
+      `https://res.cloudinary.com/${cloudName}/image/search/folder:lego-creations.json`,
+      `https://api.cloudinary.com/v1_1/${cloudName}/resources/search`
+    ];
     
-    if (response.ok) {
+    let response = null;
+    let workingUrl = null;
+    
+    for (const url of urls) {
+      try {
+        console.log('Trying Cloudinary API:', url);
+        response = await fetch(url);
+        console.log('Response status:', response.status);
+        
+        if (response.ok) {
+          workingUrl = url;
+          break;
+        }
+      } catch (err) {
+        console.log('Failed to fetch from:', url, err.message);
+        continue;
+      }
+    }
+    
+    if (response && response.ok) {
+      console.log('Successfully fetched from:', workingUrl);
       const data = await response.json();
       console.log('Cloudinary data received:', data);
       
