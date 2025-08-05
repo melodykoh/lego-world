@@ -150,6 +150,8 @@ export const updateCreationName = async (creationId, newName) => {
   }
   
   try {
+    console.log('🔄 Updating creation name:', { creationId, newName });
+    
     const { data, error } = await supabase
       .from('creations')
       .update({ name: newName })
@@ -158,14 +160,21 @@ export const updateCreationName = async (creationId, newName) => {
       .single();
 
     if (error) {
-      console.error('Error updating creation name:', error);
+      console.error('❌ Supabase error updating creation name:', error);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
 
     console.log('✅ Updated creation name to:', newName);
+    console.log('✅ Updated data:', data);
     return data;
   } catch (error) {
-    console.error('Error updating creation:', error);
+    console.error('❌ Error updating creation:', error);
     throw error;
   }
 };

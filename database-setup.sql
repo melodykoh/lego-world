@@ -36,11 +36,23 @@ CREATE POLICY "Allow public read access on creations" ON creations
 CREATE POLICY "Allow public insert access on creations" ON creations
   FOR INSERT WITH CHECK (true);
 
+CREATE POLICY "Allow public update access on creations" ON creations
+  FOR UPDATE USING (true) WITH CHECK (true);
+
+CREATE POLICY "Allow public delete access on creations" ON creations
+  FOR DELETE USING (true);
+
 CREATE POLICY "Allow public read access on photos" ON photos
   FOR SELECT USING (true);
 
 CREATE POLICY "Allow public insert access on photos" ON photos
   FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow public update access on photos" ON photos
+  FOR UPDATE USING (true) WITH CHECK (true);
+
+CREATE POLICY "Allow public delete access on photos" ON photos
+  FOR DELETE USING (true);
 
 -- Optional: Create functions for table creation (for app initialization)
 CREATE OR REPLACE FUNCTION create_creations_table()
