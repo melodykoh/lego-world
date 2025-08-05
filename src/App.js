@@ -4,13 +4,24 @@ import Home from './components/Home';
 import PhotoUpload from './components/PhotoUpload';
 import PhotoGallery from './components/PhotoGallery';
 import CreationView from './components/CreationView';
+import Login from './components/Login';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { fetchCreationsFromCloudinary, updateCreationNameInCloud, deleteCreation } from './utils/cloudinaryUtils';
 
-function App() {
+function AppContent() {
+  const { user, loading, signOut, isAuthenticated } = useAuth();
   const [currentView, setCurrentView] = useState('home');
   const [selectedCreation, setSelectedCreation] = useState(null);
   const [legoCreations, setLegoCreations] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner">🧱 Loading...</div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const loadCreations = async () => {
@@ -135,13 +146,19 @@ function App() {
           creations={legoCreations} 
           onViewCreation={viewCreation} 
           onNavigateToUpload={() => navigateToView('upload')}
-          onEditCreation={editCreationName}
-          onDeleteCreation={removeCreation}
+          onEditCreation={isAuthenticated ? editCreationName : null}
+          onDeleteCreation={isAuthenticated ? removeCreation : null}
+          isAuthenticated={isAuthenticated}
         />;
       case 'upload':
+        if (!isAuthenticated) {
+          return <Login />;
+        }
         return <PhotoUpload 
           onAddCreation={addCreation}
         />;
+      case 'login':
+        return <Login />;
       case 'creation':
         return <CreationView creation={selectedCreation} onBack={() => setCurrentView('gallery')} />;
       default:
@@ -191,13 +208,36 @@ function App() {
                 🖼️ Gallery
               </button>
             </li>
+            {isAuthenticated && (
+              <li>
+                <button 
+                  className={`menu-item ${currentView === 'upload' ? 'active' : ''}`}
+                  onClick={() => navigateToView('upload')}
+                >
+                  ➕ Add New Creation
+                </button>
+              </li>
+            )}
             <li>
-              <button 
-                className={`menu-item ${currentView === 'upload' ? 'active' : ''}`}
-                onClick={() => navigateToView('upload')}
-              >
-                ➕ Add New Creation
-              </button>
+              {isAuthenticated ? (
+                <button 
+                  className="menu-item logout-btn"
+                  onClick={async () => {
+                    await signOut();
+                    setCurrentView('home');
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  🚪 Sign Out ({user?.email})
+                </button>
+              ) : (
+                <button 
+                  className={`menu-item ${currentView === 'login' ? 'active' : ''}`}
+                  onClick={() => navigateToView('login')}
+                >
+                  🔐 Admin Login
+                </button>
+              )}
             </li>
           </ul>
         </div>
@@ -207,6 +247,14 @@ function App() {
         {renderView()}
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

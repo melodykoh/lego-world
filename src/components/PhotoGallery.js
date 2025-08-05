@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './PhotoGallery.css';
 
-function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCreation, onDeleteCreation }) {
+function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCreation, onDeleteCreation, isAuthenticated }) {
   const [viewMode, setViewMode] = useState('by-creation'); // 'by-creation' or 'view-all'
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -214,22 +214,24 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
               ) : (
                 <div className="creation-info">
                   <h3 className="creation-name">{creation.name}</h3>
-                  <div className="creation-actions">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); startEditing(creation); }}
-                      className="edit-btn"
-                      title="Edit name"
-                    >
-                      ✏️
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onDeleteCreation(creation.id); }}
-                      className="delete-btn"
-                      title="Delete creation"
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                  {isAuthenticated && (
+                    <div className="creation-actions">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); startEditing(creation); }}
+                        className="edit-btn"
+                        title="Edit name"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onDeleteCreation(creation.id); }}
+                        className="delete-btn"
+                        title="Delete creation"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
               <p className="creation-date">

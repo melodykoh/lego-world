@@ -29,30 +29,40 @@ CREATE INDEX IF NOT EXISTS idx_photos_creation_id ON photos(creation_id);
 ALTER TABLE creations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE photos ENABLE ROW LEVEL SECURITY;
 
--- Create policies to allow public access (no authentication required)
+-- Drop existing policies to recreate with authentication
+DROP POLICY IF EXISTS "Allow public read access on creations" ON creations;
+DROP POLICY IF EXISTS "Allow public insert access on creations" ON creations;
+DROP POLICY IF EXISTS "Allow public update access on creations" ON creations;
+DROP POLICY IF EXISTS "Allow public delete access on creations" ON creations;
+DROP POLICY IF EXISTS "Allow public read access on photos" ON photos;
+DROP POLICY IF EXISTS "Allow public insert access on photos" ON photos;
+DROP POLICY IF EXISTS "Allow public update access on photos" ON photos;
+DROP POLICY IF EXISTS "Allow public delete access on photos" ON photos;
+
+-- Create new policies: public read, authenticated write
 CREATE POLICY "Allow public read access on creations" ON creations
   FOR SELECT USING (true);
 
-CREATE POLICY "Allow public insert access on creations" ON creations
-  FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow authenticated insert access on creations" ON creations
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Allow public update access on creations" ON creations
-  FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow authenticated update access on creations" ON creations
+  FOR UPDATE USING (auth.uid() IS NOT NULL) WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Allow public delete access on creations" ON creations
-  FOR DELETE USING (true);
+CREATE POLICY "Allow authenticated delete access on creations" ON creations
+  FOR DELETE USING (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Allow public read access on photos" ON photos
   FOR SELECT USING (true);
 
-CREATE POLICY "Allow public insert access on photos" ON photos
-  FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow authenticated insert access on photos" ON photos
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Allow public update access on photos" ON photos
-  FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow authenticated update access on photos" ON photos
+  FOR UPDATE USING (auth.uid() IS NOT NULL) WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Allow public delete access on photos" ON photos
-  FOR DELETE USING (true);
+CREATE POLICY "Allow authenticated delete access on photos" ON photos
+  FOR DELETE USING (auth.uid() IS NOT NULL);
 
 -- Optional: Create functions for table creation (for app initialization)
 CREATE OR REPLACE FUNCTION create_creations_table()

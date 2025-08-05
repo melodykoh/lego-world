@@ -13,58 +13,71 @@
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: -1;
+  height: 40px;
   background-image: url('./assets/lego-multicolor-pattern.svg');
-  background-size: 600px 300px;
-  background-repeat: repeat;
-  opacity: 0.08;
+  background-size: 400px 160px;
+  background-repeat: repeat-x;
+  background-position: 0 -80px;
+  opacity: 0.1;
+  z-index: -1;
 }
 
-.app-header {
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  color: white;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
+.header {
+  background: white;
+  padding: 1rem 2rem;
+  border-bottom: 3px solid #e0e0e0;
+  position: relative;
   z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logo {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
+  gap: 0.5rem;
+  text-decoration: none;
 }
 
-.hamburger-btn {
-  position: absolute;
-  left: 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  z-index: 102;
+.logo-icon {
+  font-size: 2rem;
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ff6b35;
+  margin: 0;
 }
 
 .hamburger {
-  width: 24px;
-  height: 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 30px;
+  height: 25px;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  z-index: 1001;
 }
 
 .hamburger span {
+  display: block;
   width: 100%;
   height: 3px;
-  background: white;
+  background: #333;
+  margin: 5px 0;
   border-radius: 2px;
   transition: all 0.3s ease;
-  transform-origin: center;
 }
 
 .hamburger.open span:nth-child(1) {
-  transform: rotate(45deg) translate(6px, 6px);
+  transform: rotate(45deg) translate(7px, 7px);
 }
 
 .hamburger.open span:nth-child(2) {
@@ -72,54 +85,43 @@
 }
 
 .hamburger.open span:nth-child(3) {
-  transform: rotate(-45deg) translate(6px, -6px);
-}
-
-.app-title {
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin: 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  transform: rotate(-45deg) translate(7px, -7px);
 }
 
 .side-menu {
   position: fixed;
   top: 0;
-  left: -100%;
-  width: 100%;
+  right: -320px;
+  width: 320px;
   height: 100vh;
-  z-index: 101;
-  transition: left 0.3s ease;
+  z-index: 1000;
+  transition: right 0.3s ease;
 }
 
 .side-menu.open {
-  left: 0;
+  right: 0;
 }
 
 .menu-overlay {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  z-index: 999;
 }
 
 .menu-content {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 300px;
-  height: 100%;
   background: white;
-  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
+  height: 100%;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
 }
 
 .menu-header {
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  color: white;
-  padding: 1.5rem 1rem;
+  padding: 2rem;
+  border-bottom: 2px solid #f0f0f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -127,23 +129,30 @@
 
 .menu-header h2 {
   margin: 0;
-  font-size: 1.3rem;
+  color: #333;
+  font-size: 1.5rem;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: white;
   font-size: 1.5rem;
   cursor: pointer;
-  padding: 0.25rem;
+  color: #666;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f0f0f0;
+  color: #333;
 }
 
 .menu-items {
   list-style: none;
   padding: 0;
   margin: 0;
-  flex: 1;
 }
 
 .menu-items li {
@@ -151,23 +160,23 @@
 }
 
 .menu-item {
+  display: block;
   width: 100%;
+  padding: 1.25rem 2rem;
   background: none;
   border: none;
-  padding: 1.25rem 1rem;
   text-align: left;
+  cursor: pointer;
   font-size: 1.1rem;
   color: #333;
-  cursor: pointer;
   transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  text-decoration: none;
 }
 
 .menu-item:hover {
   background: #f8f9fa;
   color: #ff6b35;
+  transform: translateX(5px);
 }
 
 .menu-item.active {
@@ -177,40 +186,91 @@
   border-right: 4px solid #ff6b35;
 }
 
+.logout-btn {
+  color: #666 !important;
+  font-size: 0.9rem !important;
+}
+
+.logout-btn:hover {
+  background: #ffebee !important;
+  color: #d32f2f !important;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+}
+
+.loading-spinner {
+  font-size: 2rem;
+  color: white;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-30px);
+  }
+  60% {
+    transform: translateY(-15px);
+  }
+}
+
 .app-main {
   flex: 1;
-  padding: 2rem 1rem;
+  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
-  .app-title {
-    font-size: 1.5rem;
+  .header {
+    padding: 0.75rem 1rem;
   }
   
-  .menu-content {
+  .logo-text {
+    font-size: 1.3rem;
+  }
+  
+  .app-main {
+    padding: 1rem;
+  }
+  
+  .side-menu {
     width: 280px;
+    right: -280px;
   }
   
-  .hamburger-btn {
-    left: 0.75rem;
+  .menu-header {
+    padding: 1.5rem;
+  }
+  
+  .menu-item {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .app-title {
-    font-size: 1.3rem;
+  .header-content {
+    padding: 0;
   }
   
-  .menu-content {
-    width: 250px;
+  .logo-text {
+    font-size: 1.2rem;
   }
   
-  .hamburger-btn {
-    left: 0.5rem;
-    padding: 0.25rem;
+  .side-menu {
+    width: 260px;
+    right: -260px;
   }
   
   .hamburger {
