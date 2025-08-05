@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../utils/supabaseClient';
 
+// Check if Supabase client is available
+const isSupabaseConfigured = !!supabase;
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -16,11 +19,22 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      console.warn('Supabase not configured, auth disabled');
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Error getting session:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getSession();
@@ -34,10 +48,14 @@ export const AuthProvider = ({ children }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => subscription?.unsubscribe();
   }, []);
 
   const signInWithEmail = async (email, password) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Authentication not configured');
+    }
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -52,6 +70,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signUp = async (email, password) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Authentication not configured');
+    }
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -66,6 +88,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
+    if (!isSupabaseConfigured) {
+      console.warn('Supabase not configured, cannot sign out');
+      return;
+    }
+    
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Sign out error:', error);
