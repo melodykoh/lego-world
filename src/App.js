@@ -15,14 +15,6 @@ function AppContent() {
   const [legoCreations, setLegoCreations] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner">🧱 Loading...</div>
-      </div>
-    );
-  }
-
   useEffect(() => {
     const loadCreations = async () => {
       try {
@@ -131,6 +123,15 @@ function AppContent() {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  // Show loading spinner while auth is loading
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner">🧱 Loading...</div>
+      </div>
+    );
+  }
 
   const renderView = () => {
     switch (currentView) {
