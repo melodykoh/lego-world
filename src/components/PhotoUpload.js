@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './PhotoUpload.css';
 import { compressImage } from '../utils/imageUtils';
-import { uploadToCloudinary, cacheCreationMetadata } from '../utils/cloudinaryUtils';
+import { uploadToCloudinary, saveCreationMetadata } from '../utils/cloudinaryUtils';
 
 function PhotoUpload({ onAddCreation }) {
   const [creationName, setCreationName] = useState('');
@@ -194,8 +194,8 @@ function PhotoUpload({ onAddCreation }) {
     console.log('Calling onAddCreation with:', creationData);
 
     try {
-      // Cache the creation metadata for persistence
-      cacheCreationMetadata(creationData);
+      // Save the creation metadata to database for cross-device sync
+      await saveCreationMetadata(creationData);
       
       onAddCreation(creationData);
 

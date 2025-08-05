@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js';
+import { saveCreationToDatabase, fetchCreationsFromDatabase } from './supabaseClient';
 
 // Update sync status in UI
 const updateSyncStatus = (status, message) => {
@@ -97,9 +98,14 @@ const getCachedCreations = () => {
   }
 };
 
-// Cache creation data when uploading
-export const cacheCreationMetadata = (creationData) => {
+// Save creation metadata to database
+export const saveCreationMetadata = async (creationData) => {
   try {
+    // Save to database first (primary storage)
+    await saveCreationToDatabase(creationData);
+    console.log('✅ Saved creation to database:', creationData.name);
+    
+    // Also cache locally as backup
     const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
     const existingIndex = cached.findIndex(c => c.id === creationData.id);
     
@@ -110,10 +116,10 @@ export const cacheCreationMetadata = (creationData) => {
     }
     
     localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(cached));
-    console.log('✅ Cached creation metadata:', creationData);
-    console.log('📦 Total cached creations:', cached.length);
+    console.log('✅ Also cached locally as backup');
   } catch (error) {
-    console.error('Error caching creation metadata:', error);
+    console.error('Error saving creation metadata:', error);
+    throw error;
   }
 };
 
@@ -127,21 +133,43 @@ const generateSignature = (params, apiSecret) => {
   return CryptoJS.HmacSHA1(sortedParams, apiSecret).toString();
 };
 
-// Simplified approach: Use cached data with cloud storage for images
+// Fetch creations from database with fallback to cache
 export const fetchCreationsFromCloudinary = async () => {
-  console.log('🔍 Loading creations...');
+  console.log('🔍 Loading creations from database...');
   
-  // Get cached creations (this includes metadata for all uploaded creations)
-  const cachedCreations = getCachedCreations();
-  
-  if (cachedCreations.length > 0) {
-    console.log('✅ Found', cachedCreations.length, 'cached creations');
-    // Images are already stored in Cloudinary with persistent URLs
-    updateSyncStatus('synced', '☁️ Images stored in cloud, metadata synced when you upload from this device.');
-    return cachedCreations;
+  try {
+    // Try to fetch from database first
+    const databaseCreations = await fetchCreationsFromDatabase();
+    
+    if (databaseCreations.length > 0) {
+      console.log('✅ Found', databaseCreations.length, 'creations in database');
+      updateSyncStatus('synced', '🌐 Cross-device sync active! All your creations sync across devices.');
+      return databaseCreations;
+    }
+    
+    // If no database creations, check cache for migration
+    const cachedCreations = getCachedCreations();
+    if (cachedCreations.length > 0) {
+      console.log('📦 Found cached creations, migrating to database...');
+      // Migrate cached data to database
+      for (const creation of cachedCreations) {
+        try {
+          await saveCreationToDatabase(creation);
+        } catch (error) {
+          console.warn('Migration error for creation:', creation.name, error);
+        }
+      }
+      updateSyncStatus('synced', '🌐 Migrated to database! Cross-device sync now active.');
+      return cachedCreations;
+    }
+    
+    console.log('📱 No creations found');
+    updateSyncStatus('local-only', '📱 Upload your first creation to get started!');
+    return [];
+    
+  } catch (error) {
+    console.error('❌ Database error, using cached data:', error);
+    updateSyncStatus('local-only', '📱 Database unavailable, using local data only.');
+    return getCachedCreations();
   }
-  
-  console.log('📱 No cached creations found');
-  updateSyncStatus('local-only', '📱 Upload your first creation to get started!');
-  return [];
 };
