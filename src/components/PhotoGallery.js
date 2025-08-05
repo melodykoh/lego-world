@@ -172,9 +172,10 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
             className="creation-card"
           >
             <div 
-              className="card-image-container"
+              className="card-clickable-area"
               onClick={() => onViewCreation(creation)}
             >
+              <div className="card-image-container">
               <img 
                 src={creation.photos[0].url} 
                 alt={creation.name}
@@ -186,6 +187,12 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
                   📷 {creation.photos.length}
                 </div>
               )}
+              </div>
+              <div className="card-overlay">
+                <div className="overlay-content">
+                  <span className="view-text">👁️ View Creation</span>
+                </div>
+              </div>
             </div>
             
             <div className="card-content">
@@ -228,12 +235,6 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
               <p className="creation-date">
                 Added {new Date(creation.dateAdded).toLocaleDateString()}
               </p>
-            </div>
-            
-            <div className="card-overlay">
-              <div className="overlay-content">
-                <span className="view-text">👁️ View Creation</span>
-              </div>
             </div>
           </div>
         ))}

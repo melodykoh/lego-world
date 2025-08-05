@@ -107,8 +107,11 @@
     0 4px 0 #e0e0e0,
     0 6px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  cursor: pointer;
   position: relative;
+}
+
+.card-clickable-area {
+  cursor: pointer;
 }
 
 .creation-card::before {
@@ -193,10 +196,14 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  padding: 0.25rem;
+  font-size: 1.2rem;
+  padding: 0.5rem;
   border-radius: 4px;
   transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 10;
 }
 
 .edit-btn:hover {
@@ -653,6 +660,29 @@
   
   .creation-name {
     font-size: 1.1rem;
+  }
+  
+  .creation-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .creation-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .edit-btn,
+  .delete-btn {
+    font-size: 1.5rem;
+    padding: 0.75rem;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .card-overlay {
+    display: none;
   }
 }
 
