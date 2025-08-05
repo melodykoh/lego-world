@@ -139,6 +139,7 @@ export const fetchCreationsFromCloudinary = async () => {
   
   try {
     // Try to fetch from database first
+    console.log('🔍 Attempting to fetch from Supabase database...');
     const databaseCreations = await fetchCreationsFromDatabase();
     
     if (databaseCreations.length > 0) {
@@ -146,6 +147,7 @@ export const fetchCreationsFromCloudinary = async () => {
       updateSyncStatus('synced', '🌐 Cross-device sync active! All your creations sync across devices.');
       return databaseCreations;
     }
+    console.log('📦 No creations in database yet');
     
     // If no database creations, check cache for migration
     const cachedCreations = getCachedCreations();
