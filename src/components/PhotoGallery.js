@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './PhotoGallery.css';
 
-function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
+function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCreation, onDeleteCreation }) {
   const [viewMode, setViewMode] = useState('by-creation'); // 'by-creation' or 'view-all'
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [editingCreationId, setEditingCreationId] = useState(null);
+  const [editingName, setEditingName] = useState('');
   
   // Touch/swipe handling hooks - must be at top level
   const [touchStart, setTouchStart] = useState(null);
@@ -42,6 +44,24 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
   const closePhotoModal = () => {
     setSelectedPhoto(null);
     setCurrentPhotoIndex(0);
+  };
+
+  const startEditing = (creation) => {
+    setEditingCreationId(creation.id);
+    setEditingName(creation.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingCreationId(null);
+    setEditingName('');
+  };
+
+  const saveEditedName = async () => {
+    if (editingName.trim() && editingName.trim() !== '') {
+      await onEditCreation(editingCreationId, editingName.trim());
+      setEditingCreationId(null);
+      setEditingName('');
+    }
   };
 
   // Keyboard navigation
@@ -150,9 +170,11 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
           <div 
             key={creation.id} 
             className="creation-card"
-            onClick={() => onViewCreation(creation)}
           >
-            <div className="card-image-container">
+            <div 
+              className="card-image-container"
+              onClick={() => onViewCreation(creation)}
+            >
               <img 
                 src={creation.photos[0].url} 
                 alt={creation.name}
@@ -167,7 +189,42 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
             </div>
             
             <div className="card-content">
-              <h3 className="creation-name">{creation.name}</h3>
+              {editingCreationId === creation.id ? (
+                <div className="edit-name-container">
+                  <input
+                    type="text"
+                    value={editingName}
+                    onChange={(e) => setEditingName(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && saveEditedName()}
+                    className="edit-name-input"
+                    autoFocus
+                  />
+                  <div className="edit-actions">
+                    <button onClick={saveEditedName} className="save-btn">✓</button>
+                    <button onClick={cancelEditing} className="cancel-btn">✗</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="creation-info">
+                  <h3 className="creation-name">{creation.name}</h3>
+                  <div className="creation-actions">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); startEditing(creation); }}
+                      className="edit-btn"
+                      title="Edit name"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onDeleteCreation(creation.id); }}
+                      className="delete-btn"
+                      title="Delete creation"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              )}
               <p className="creation-date">
                 Added {new Date(creation.dateAdded).toLocaleDateString()}
               </p>

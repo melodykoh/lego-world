@@ -141,3 +141,57 @@ export const fetchCreationsFromDatabase = async () => {
     throw error;
   }
 };
+
+// Update creation name in database
+export const updateCreationName = async (creationId, newName) => {
+  if (!supabase) {
+    console.error('Supabase client not initialized');
+    throw new Error('Database not available');
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('creations')
+      .update({ name: newName })
+      .eq('id', creationId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating creation name:', error);
+      throw error;
+    }
+
+    console.log('✅ Updated creation name to:', newName);
+    return data;
+  } catch (error) {
+    console.error('Error updating creation:', error);
+    throw error;
+  }
+};
+
+// Delete creation from database
+export const deleteCreationFromDatabase = async (creationId) => {
+  if (!supabase) {
+    console.error('Supabase client not initialized');
+    throw new Error('Database not available');
+  }
+  
+  try {
+    // Photos will be automatically deleted due to CASCADE
+    const { error } = await supabase
+      .from('creations')
+      .delete()
+      .eq('id', creationId);
+
+    if (error) {
+      console.error('Error deleting creation:', error);
+      throw error;
+    }
+
+    console.log('✅ Deleted creation:', creationId);
+  } catch (error) {
+    console.error('Error deleting creation:', error);
+    throw error;
+  }
+};

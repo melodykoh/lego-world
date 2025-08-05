@@ -10,6 +10,7 @@ function PhotoUpload({ onAddCreation }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [errors, setErrors] = useState([]);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   // File validation constants
   const ACCEPTED_FORMATS = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
@@ -283,6 +284,8 @@ function PhotoUpload({ onAddCreation }) {
                     src={preview.url} 
                     alt={`Preview ${index + 1}`}
                     className="preview-image"
+                    onClick={() => setZoomedImage(preview.url)}
+                    style={{ cursor: 'pointer' }}
                   />
                   <button
                     type="button"
@@ -302,6 +305,28 @@ function PhotoUpload({ onAddCreation }) {
           🚀 Add Creation
         </button>
       </form>
+
+      {/* Zoom Modal */}
+      {zoomedImage && (
+        <div 
+          className="zoom-modal"
+          onClick={() => setZoomedImage(null)}
+        >
+          <div className="zoom-content">
+            <img 
+              src={zoomedImage} 
+              alt="Zoomed view"
+              className="zoom-image"
+            />
+            <button 
+              className="zoom-close"
+              onClick={() => setZoomedImage(null)}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

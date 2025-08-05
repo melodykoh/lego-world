@@ -1,5 +1,5 @@
 import CryptoJS from 'crypto-js';
-import { saveCreationToDatabase, fetchCreationsFromDatabase } from './supabaseClient';
+import { saveCreationToDatabase, fetchCreationsFromDatabase, updateCreationName, deleteCreationFromDatabase } from './supabaseClient';
 
 // Update sync status in UI
 const updateSyncStatus = (status, message) => {
@@ -173,5 +173,44 @@ export const fetchCreationsFromCloudinary = async () => {
     console.error('❌ Database error, using cached data:', error);
     updateSyncStatus('local-only', '📱 Database unavailable, using local data only.');
     return getCachedCreations();
+  }
+};
+
+// Update creation name
+export const updateCreationNameInCloud = async (creationId, newName) => {
+  try {
+    // Update in database
+    await updateCreationName(creationId, newName);
+    
+    // Update local cache as well
+    const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
+    const index = cached.findIndex(c => c.id === creationId);
+    if (index >= 0) {
+      cached[index].name = newName;
+      localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(cached));
+    }
+    
+    console.log('✅ Updated creation name in both database and cache');
+  } catch (error) {
+    console.error('Error updating creation name:', error);
+    throw error;
+  }
+};
+
+// Delete creation
+export const deleteCreation = async (creationId) => {
+  try {
+    // Delete from database
+    await deleteCreationFromDatabase(creationId);
+    
+    // Remove from local cache
+    const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
+    const filtered = cached.filter(c => c.id !== creationId);
+    localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(filtered));
+    
+    console.log('✅ Deleted creation from both database and cache');
+  } catch (error) {
+    console.error('Error deleting creation:', error);
+    throw error;
   }
 };

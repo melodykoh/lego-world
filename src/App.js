@@ -4,7 +4,7 @@ import Home from './components/Home';
 import PhotoUpload from './components/PhotoUpload';
 import PhotoGallery from './components/PhotoGallery';
 import CreationView from './components/CreationView';
-import { fetchCreationsFromCloudinary } from './utils/cloudinaryUtils';
+import { fetchCreationsFromCloudinary, updateCreationNameInCloud, deleteCreation } from './utils/cloudinaryUtils';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
@@ -69,6 +69,43 @@ function App() {
     }
   };
 
+  const editCreationName = async (creationId, newName) => {
+    try {
+      await updateCreationNameInCloud(creationId, newName);
+      // Refresh the list
+      const updatedCreations = await fetchCreationsFromCloudinary();
+      setLegoCreations(updatedCreations);
+      // Update selected creation if it's the one being edited
+      if (selectedCreation && selectedCreation.id === creationId) {
+        setSelectedCreation({ ...selectedCreation, name: newName });
+      }
+    } catch (error) {
+      console.error('Error updating creation name:', error);
+      alert('Failed to update creation name. Please try again.');
+    }
+  };
+
+  const removeCreation = async (creationId) => {
+    if (!window.confirm('Are you sure you want to delete this creation? This cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await deleteCreation(creationId);
+      // Refresh the list
+      const updatedCreations = await fetchCreationsFromCloudinary();
+      setLegoCreations(updatedCreations);
+      // Navigate away if viewing the deleted creation
+      if (selectedCreation && selectedCreation.id === creationId) {
+        setCurrentView('gallery');
+        setSelectedCreation(null);
+      }
+    } catch (error) {
+      console.error('Error deleting creation:', error);
+      alert('Failed to delete creation. Please try again.');
+    }
+  };
+
   const viewCreation = (creation) => {
     setSelectedCreation(creation);
     setCurrentView('creation');
@@ -98,6 +135,8 @@ function App() {
           creations={legoCreations} 
           onViewCreation={viewCreation} 
           onNavigateToUpload={() => navigateToView('upload')}
+          onEditCreation={editCreationName}
+          onDeleteCreation={removeCreation}
         />;
       case 'upload':
         return <PhotoUpload 
