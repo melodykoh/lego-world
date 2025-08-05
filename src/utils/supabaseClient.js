@@ -9,12 +9,10 @@ console.log('Supabase config:', {
   url: supabaseUrl ? supabaseUrl.substring(0, 20) + '...' : 'missing'
 });
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
-  throw new Error('Missing Supabase environment variables');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create a dummy client if environment variables are missing (for build time)
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Database schema setup
 export const initializeDatabase = async () => {
@@ -41,6 +39,11 @@ export const initializeDatabase = async () => {
 
 // Store creation in database
 export const saveCreationToDatabase = async (creation) => {
+  if (!supabase) {
+    console.error('Supabase client not initialized');
+    throw new Error('Database not available');
+  }
+  
   try {
     // Insert creation record
     const { data: creationData, error: creationError } = await supabase
@@ -87,6 +90,11 @@ export const saveCreationToDatabase = async (creation) => {
 
 // Fetch all creations from database
 export const fetchCreationsFromDatabase = async () => {
+  if (!supabase) {
+    console.error('Supabase client not initialized');
+    throw new Error('Database not available');
+  }
+  
   try {
     console.log('🔍 Fetching creations from database...');
     
