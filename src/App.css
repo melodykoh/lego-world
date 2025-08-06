@@ -41,6 +41,10 @@
   box-sizing: border-box;
 }
 
+.header-spacer {
+  width: 30px; /* Same width as hamburger to balance layout */
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -131,9 +135,7 @@
 .menu-header {
   padding: 2rem;
   border-bottom: 2px solid #f0f0f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  text-align: center;
 }
 
 .menu-header h2 {
@@ -142,21 +144,6 @@
   font-size: 1.5rem;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #666;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
-}
 
 .menu-items {
   list-style: none;

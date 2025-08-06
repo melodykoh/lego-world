@@ -176,15 +176,16 @@ function AppContent() {
     <div className="App">
       <header className="header">
         <div className="header-content">
-          <a href="#" className="logo" onClick={(e) => { e.preventDefault(); navigateToView('home'); }}>
-            <span className="logo-icon">🧱</span>
-            <h1 className="logo-text">Aiden's Lego World</h1>
-          </a>
           <button className={`hamburger ${isMenuOpen ? 'open' : ''}`} onClick={toggleMenu}>
             <span></span>
             <span></span>
             <span></span>
           </button>
+          <a href="#" className="logo" onClick={(e) => { e.preventDefault(); navigateToView('home'); }}>
+            <span className="logo-icon">🧱</span>
+            <h1 className="logo-text">Aiden's Lego World</h1>
+          </a>
+          <div className="header-spacer"></div>
         </div>
       </header>
 
@@ -193,7 +194,6 @@ function AppContent() {
         <div className="menu-content">
           <div className="menu-header">
             <h2>Menu</h2>
-            <button className="close-btn" onClick={() => setIsMenuOpen(false)}>✕</button>
           </div>
           <ul className="menu-items">
             <li>
