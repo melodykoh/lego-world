@@ -5,6 +5,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  background: #f8f9fa;
 }
 
 .App::before {
@@ -102,6 +103,10 @@
   right: 0;
 }
 
+.side-menu:not(.open) .menu-overlay {
+  display: none;
+}
+
 .menu-overlay {
   position: fixed;
   top: 0;
@@ -109,7 +114,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 998;
 }
 
 .menu-content {
@@ -117,6 +122,8 @@
   height: 100%;
   box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
+  position: relative;
+  z-index: 999;
 }
 
 .menu-header {
@@ -202,6 +209,12 @@
   justify-content: center;
   min-height: 100vh;
   background: linear-gradient(135deg, #ff6b35, #f7931e);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
 }
 
 .loading-spinner {
