@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS creations (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   date_added TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
 -- Create photos table

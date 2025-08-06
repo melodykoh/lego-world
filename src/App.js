@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { fetchCreationsFromCloudinary, updateCreationNameInCloud, deleteCreation } from './utils/cloudinaryUtils';
 
 function AppContent() {
-  const { user, loading, signOut, isAuthenticated } = useAuth();
+  const { user, loading, signOut, isAuthenticated, isAdmin } = useAuth();
   const [currentView, setCurrentView] = useState('home');
   const [selectedCreation, setSelectedCreation] = useState(null);
   const [legoCreations, setLegoCreations] = useState([]);
@@ -147,12 +147,12 @@ function AppContent() {
           creations={legoCreations} 
           onViewCreation={viewCreation} 
           onNavigateToUpload={() => navigateToView('upload')}
-          onEditCreation={isAuthenticated ? editCreationName : null}
-          onDeleteCreation={isAuthenticated ? removeCreation : null}
-          isAuthenticated={isAuthenticated}
+          onEditCreation={isAdmin ? editCreationName : null}
+          onDeleteCreation={isAdmin ? removeCreation : null}
+          isAuthenticated={isAdmin}
         />;
       case 'upload':
-        if (!isAuthenticated) {
+        if (!isAdmin) {
           return <Login />;
         }
         return <PhotoUpload 
@@ -212,7 +212,7 @@ function AppContent() {
                 🖼️ Gallery
               </button>
             </li>
-            {isAuthenticated && (
+            {isAdmin && (
               <li>
                 <button 
                   className={`menu-item ${currentView === 'upload' ? 'active' : ''}`}
@@ -223,7 +223,7 @@ function AppContent() {
               </li>
             )}
             <li>
-              {isAuthenticated ? (
+              {isAdmin ? (
                 <button 
                   className="menu-item logout-btn"
                   onClick={async () => {

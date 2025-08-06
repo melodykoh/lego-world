@@ -8,7 +8,10 @@ function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInWithEmail, signUp } = useAuth();
+  const { signInWithEmail, signUp, ADMIN_EMAIL } = useAuth();
+
+  // Check if admin account exists (simplified check)
+  const isAdminSetup = !!ADMIN_EMAIL && ADMIN_EMAIL !== 'your-email@example.com';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,6 +20,12 @@ function Login() {
 
     try {
       if (isSignUp) {
+        // Only allow sign-up for admin email
+        if (email !== ADMIN_EMAIL) {
+          setError('Sign-up is restricted. Contact admin for access.');
+          setLoading(false);
+          return;
+        }
         await signUp(email, password);
         setError('Check your email for confirmation link!');
       } else {
@@ -87,21 +96,31 @@ function Login() {
           </button>
         </form>
 
-        <div className="auth-toggle">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError('');
-            }}
-            className="toggle-btn"
-          >
-            {isSignUp 
-              ? '👈 Already have an account? Sign in' 
-              : '➡️ Need an account? Sign up'
-            }
-          </button>
-        </div>
+        {/* Hide sign-up toggle if admin is already set up */}
+        {!isAdminSetup && (
+          <div className="auth-toggle">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError('');
+              }}
+              className="toggle-btn"
+            >
+              {isSignUp 
+                ? '👈 Already have an account? Sign in' 
+                : '➡️ Need an account? Sign up'
+              }
+            </button>
+          </div>
+        )}
+
+        {/* Show admin setup message */}
+        {isAdminSetup && !isSignUp && (
+          <div className="admin-info">
+            <p>🔒 Admin access only. Sign in with your admin account.</p>
+          </div>
+        )}
 
         <div className="guest-notice">
           <p>💡 <strong>Tip:</strong> Guests can view all creations without logging in</p>
