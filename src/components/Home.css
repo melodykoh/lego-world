@@ -278,6 +278,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1.5rem;
+  justify-items: center;
 }
 
 .stat-card {
@@ -319,6 +320,8 @@
   .action-btn {
     width: 100%;
     max-width: 300px;
+    text-align: center;
+    justify-content: center;
   }
   
   .recent-grid {
@@ -329,6 +332,8 @@
   .stats-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
+    justify-items: center;
+    max-width: 100%;
   }
   
   .stat-number {
