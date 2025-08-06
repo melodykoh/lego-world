@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Check if current user is the admin (replace with your email)
-  const ADMIN_EMAIL = 'your-email@example.com'; // Temporarily set to default for initial setup
+  const ADMIN_EMAIL = 'melodykoh0818@gmail.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const value = {

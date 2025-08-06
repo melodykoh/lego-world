@@ -20,7 +20,12 @@ function Login() {
 
     try {
       if (isSignUp) {
-        // Temporarily allow sign-up for initial admin setup
+        // Only allow sign-up for admin email
+        if (email !== ADMIN_EMAIL) {
+          setError('Sign-up is restricted. Contact admin for access.');
+          setLoading(false);
+          return;
+        }
         await signUp(email, password);
         setError('Check your email for confirmation link!');
       } else {
