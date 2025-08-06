@@ -174,15 +174,18 @@ function AppContent() {
 
   return (
     <div className="App">
-      <header className="app-header">
-        <button className="hamburger-btn" onClick={toggleMenu}>
-          <div className={`hamburger ${isMenuOpen ? 'open' : ''}`}>
+      <header className="header">
+        <div className="header-content">
+          <a href="#" className="logo" onClick={(e) => { e.preventDefault(); navigateToView('home'); }}>
+            <span className="logo-icon">🧱</span>
+            <h1 className="logo-text">Aiden's Lego World</h1>
+          </a>
+          <button className={`hamburger ${isMenuOpen ? 'open' : ''}`} onClick={toggleMenu}>
             <span></span>
             <span></span>
             <span></span>
-          </div>
-        </button>
-        <h1 className="app-title">🧱 Aiden's Lego World</h1>
+          </button>
+        </div>
       </header>
 
       <nav className={`side-menu ${isMenuOpen ? 'open' : ''}`}>
