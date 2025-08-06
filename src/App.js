@@ -153,13 +153,13 @@ function AppContent() {
         />;
       case 'upload':
         if (!isAdmin) {
-          return <Login />;
+          return <Login onSignIn={() => navigateToView('home')} />;
         }
         return <PhotoUpload 
           onAddCreation={addCreation}
         />;
       case 'login':
-        return <Login />;
+        return <Login onSignIn={() => navigateToView('home')} />;
       case 'creation':
         return <CreationView creation={selectedCreation} onBack={() => setCurrentView('gallery')} />;
       default:

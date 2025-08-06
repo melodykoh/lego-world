@@ -203,7 +203,7 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   position: relative;
-  z-index: 10;
+  z-index: 100;
 }
 
 .edit-btn:hover {
@@ -216,6 +216,8 @@
 
 .edit-name-container {
   margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 100;
 }
 
 .edit-name-input {
@@ -226,11 +228,15 @@
   font-size: 1rem;
   font-family: inherit;
   margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 100;
 }
 
 .edit-actions {
   display: flex;
   gap: 0.5rem;
+  position: relative;
+  z-index: 100;
 }
 
 .save-btn,

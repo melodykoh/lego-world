@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
-function Login() {
+function Login({ onSignIn }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -30,6 +30,10 @@ function Login() {
         setError('Check your email for confirmation link!');
       } else {
         await signInWithEmail(email, password);
+        // Navigate to home after successful sign-in
+        if (onSignIn) {
+          onSignIn();
+        }
       }
     } catch (error) {
       setError(error.message);
