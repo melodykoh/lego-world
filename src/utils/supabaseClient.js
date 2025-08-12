@@ -45,14 +45,20 @@ export const saveCreationToDatabase = async (creation) => {
   }
   
   try {
-    // Insert creation record with user ownership
+    // Get authenticated user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Insert creation record
     const { data: creationData, error: creationError } = await supabase
       .from('creations')
       .insert([{
         id: creation.id,
         name: creation.name,
         date_added: creation.dateAdded,
-        user_id: (await supabase.auth.getUser()).data.user?.id
+        user_id: user.id
       }])
       .select()
       .single();
