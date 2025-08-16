@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './PhotoUpload.css';
 import { compressImage } from '../utils/imageUtils';
 import { uploadToCloudinary, saveCreationMetadata } from '../utils/cloudinaryUtils';
+import { getMediaThumbnail } from '../utils/videoUtils';
 
 function PhotoUpload({ onAddCreation }) {
   const [creationName, setCreationName] = useState('');
@@ -293,27 +294,18 @@ function PhotoUpload({ onAddCreation }) {
             <div className="preview-grid">
               {previews.map((preview, index) => (
                 <div key={index} className="preview-item">
-                  {preview.mediaType === 'video' ? (
-                    <div className="video-thumbnail">
-                      <video 
-                        src={preview.url} 
-                        className="preview-image"
-                        preload="metadata"
-                        muted
-                        onClick={() => setZoomedMedia({url: preview.url, mediaType: preview.mediaType})}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <div className="play-overlay">▶</div>
-                    </div>
-                  ) : (
+                  <div className="video-thumbnail">
                     <img 
-                      src={preview.url} 
+                      src={getMediaThumbnail(preview, { width: 200, height: 200 }) || preview.url} 
                       alt={`Preview ${index + 1}`}
                       className="preview-image"
                       onClick={() => setZoomedMedia({url: preview.url, mediaType: preview.mediaType})}
                       style={{ cursor: 'pointer' }}
                     />
-                  )}
+                    {preview.mediaType === 'video' && (
+                      <div className="play-overlay">▶</div>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => removePreview(index)}

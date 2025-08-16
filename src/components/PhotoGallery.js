@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './PhotoGallery.css';
+import { getMediaThumbnail } from '../utils/videoUtils';
 
 function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCreation, onDeleteCreation, isAuthenticated }) {
   const [viewMode, setViewMode] = useState('by-creation'); // 'by-creation' or 'view-all'
@@ -144,24 +145,17 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
           onClick={() => openPhotoModal(photo, index)}
         >
           <div className="photo-tile-container">
-            {photo.mediaType === 'video' ? (
-              <div className="video-thumbnail">
-                <video 
-                  src={photo.url} 
-                  className="photo-tile-image"
-                  preload="metadata"
-                  muted
-                />
-                <div className="play-overlay">▶</div>
-              </div>
-            ) : (
+            <div className="video-thumbnail">
               <img 
-                src={photo.url} 
+                src={getMediaThumbnail(photo, { width: 300, height: 300 }) || photo.url} 
                 alt={photo.creationName}
                 className="photo-tile-image"
                 loading="lazy"
               />
-            )}
+              {photo.mediaType === 'video' && (
+                <div className="play-overlay">▶</div>
+              )}
+            </div>
             <div className="photo-overlay">
               <div className="photo-info">
                 <div className="photo-creation-name">{photo.creationName}</div>
@@ -188,24 +182,17 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
               onClick={() => onViewCreation(creation)}
             >
               <div className="card-image-container">
-              {creation.photos[0].mediaType === 'video' ? (
                 <div className="video-thumbnail">
-                  <video 
-                    src={creation.photos[0].url} 
+                  <img 
+                    src={getMediaThumbnail(creation.photos[0], { width: 400, height: 300 }) || creation.photos[0].url} 
+                    alt={creation.name}
                     className="card-image"
-                    preload="metadata"
-                    muted
+                    loading="lazy"
                   />
-                  <div className="play-overlay">▶</div>
+                  {creation.photos[0].mediaType === 'video' && (
+                    <div className="play-overlay">▶</div>
+                  )}
                 </div>
-              ) : (
-                <img 
-                  src={creation.photos[0].url} 
-                  alt={creation.name}
-                  className="card-image"
-                  loading="lazy"
-                />
-              )}
               {creation.photos.length > 1 && (
                 <div className="photo-count">
                   📷 {creation.photos.length}

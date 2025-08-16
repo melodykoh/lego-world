@@ -1,5 +1,6 @@
 import React from 'react';
 import './Home.css';
+import { getMediaThumbnail } from '../utils/videoUtils';
 
 function Home({ creations, onNavigateToGallery, onNavigateToUpload, onViewCreation }) {
   const recentCreations = creations.slice(0, 3); // Show 3 most recent
@@ -39,23 +40,16 @@ function Home({ creations, onNavigateToGallery, onNavigateToUpload, onViewCreati
                 onClick={() => onViewCreation(creation)}
               >
                 <div className="recent-image-container">
-                  {creation.photos[0].mediaType === 'video' ? (
-                    <div className="video-thumbnail">
-                      <video 
-                        src={creation.photos[0].url} 
-                        className="recent-image"
-                        preload="metadata"
-                        muted
-                      />
-                      <div className="play-overlay">▶</div>
-                    </div>
-                  ) : (
+                  <div className="video-thumbnail">
                     <img 
-                      src={creation.photos[0].url} 
+                      src={getMediaThumbnail(creation.photos[0], { width: 400, height: 300 }) || creation.photos[0].url} 
                       alt={creation.name}
                       className="recent-image"
                     />
-                  )}
+                    {creation.photos[0].mediaType === 'video' && (
+                      <div className="play-overlay">▶</div>
+                    )}
+                  </div>
                   {creation.photos.length > 1 && (
                     <div className="photo-badge">
                       📷 {creation.photos.length}

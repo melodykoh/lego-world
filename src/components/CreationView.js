@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './CreationView.css';
+import { getMediaThumbnail } from '../utils/videoUtils';
 
 function CreationView({ creation, onBack }) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -91,23 +92,16 @@ function CreationView({ creation, onBack }) {
                 onClick={() => goToPhoto(index)}
                 className={`thumbnail ${index === currentPhotoIndex ? 'active' : ''}`}
               >
-                {photo.mediaType === 'video' ? (
-                  <div className="video-thumbnail">
-                    <video 
-                      src={photo.url} 
-                      className="thumbnail-image"
-                      preload="metadata"
-                      muted
-                    />
-                    <div className="play-overlay">▶</div>
-                  </div>
-                ) : (
+                <div className="video-thumbnail">
                   <img 
-                    src={photo.url} 
+                    src={getMediaThumbnail(photo, { width: 150, height: 150 }) || photo.url} 
                     alt={`Thumbnail ${index + 1}`}
                     className="thumbnail-image"
                   />
-                )}
+                  {photo.mediaType === 'video' && (
+                    <div className="play-overlay">▶</div>
+                  )}
+                </div>
               </button>
             ))}
           </div>
