@@ -196,3 +196,55 @@
     justify-content: flex-start;
   }
 }
+
+/* Video-specific styles */
+.video-thumbnail {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
+.video-thumbnail video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.thumbnail .play-overlay {
+  width: 25px;
+  height: 25px;
+  font-size: 12px;
+}
+
+.video-thumbnail:hover .play-overlay {
+  background: rgba(0, 0, 0, 0.9);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Ensure video elements behave like images */
+.main-photo[controls] {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 600px;
+}

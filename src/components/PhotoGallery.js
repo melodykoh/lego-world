@@ -144,12 +144,24 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
           onClick={() => openPhotoModal(photo, index)}
         >
           <div className="photo-tile-container">
-            <img 
-              src={photo.url} 
-              alt={photo.creationName}
-              className="photo-tile-image"
-              loading="lazy"
-            />
+            {photo.mediaType === 'video' ? (
+              <div className="video-thumbnail">
+                <video 
+                  src={photo.url} 
+                  className="photo-tile-image"
+                  preload="metadata"
+                  muted
+                />
+                <div className="play-overlay">▶</div>
+              </div>
+            ) : (
+              <img 
+                src={photo.url} 
+                alt={photo.creationName}
+                className="photo-tile-image"
+                loading="lazy"
+              />
+            )}
             <div className="photo-overlay">
               <div className="photo-info">
                 <div className="photo-creation-name">{photo.creationName}</div>
@@ -176,12 +188,24 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
               onClick={() => onViewCreation(creation)}
             >
               <div className="card-image-container">
-              <img 
-                src={creation.photos[0].url} 
-                alt={creation.name}
-                className="card-image"
-                loading="lazy"
-              />
+              {creation.photos[0].mediaType === 'video' ? (
+                <div className="video-thumbnail">
+                  <video 
+                    src={creation.photos[0].url} 
+                    className="card-image"
+                    preload="metadata"
+                    muted
+                  />
+                  <div className="play-overlay">▶</div>
+                </div>
+              ) : (
+                <img 
+                  src={creation.photos[0].url} 
+                  alt={creation.name}
+                  className="card-image"
+                  loading="lazy"
+                />
+              )}
               {creation.photos.length > 1 && (
                 <div className="photo-count">
                   📷 {creation.photos.length}
@@ -314,11 +338,22 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload, onEditCre
               </div>
             )}
             
-            <img 
-              src={selectedPhoto.url} 
-              alt={selectedPhoto.creationName}
-              className="modal-photo"
-            />
+            {selectedPhoto.mediaType === 'video' ? (
+              <video 
+                src={selectedPhoto.url} 
+                className="modal-photo"
+                controls
+                autoPlay
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <img 
+                src={selectedPhoto.url} 
+                alt={selectedPhoto.creationName}
+                className="modal-photo"
+              />
+            )}
             <div className="modal-info">
               <h3 className="modal-creation-name">{selectedPhoto.creationName}</h3>
               <p className="modal-date">

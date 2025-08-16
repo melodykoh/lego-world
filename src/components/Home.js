@@ -2,7 +2,7 @@ import React from 'react';
 import './Home.css';
 
 function Home({ creations, onNavigateToGallery, onNavigateToUpload, onViewCreation }) {
-  const recentCreations = creations.slice(-3).reverse(); // Show 3 most recent
+  const recentCreations = creations.slice(0, 3); // Show 3 most recent
 
   return (
     <div className="home">
@@ -39,11 +39,23 @@ function Home({ creations, onNavigateToGallery, onNavigateToUpload, onViewCreati
                 onClick={() => onViewCreation(creation)}
               >
                 <div className="recent-image-container">
-                  <img 
-                    src={creation.photos[0].url} 
-                    alt={creation.name}
-                    className="recent-image"
-                  />
+                  {creation.photos[0].mediaType === 'video' ? (
+                    <div className="video-thumbnail">
+                      <video 
+                        src={creation.photos[0].url} 
+                        className="recent-image"
+                        preload="metadata"
+                        muted
+                      />
+                      <div className="play-overlay">▶</div>
+                    </div>
+                  ) : (
+                    <img 
+                      src={creation.photos[0].url} 
+                      alt={creation.name}
+                      className="recent-image"
+                    />
+                  )}
                   {creation.photos.length > 1 && (
                     <div className="photo-badge">
                       📷 {creation.photos.length}
@@ -90,7 +102,7 @@ function Home({ creations, onNavigateToGallery, onNavigateToUpload, onViewCreati
           <div className="stat-card">
             <div className="stat-number">
               {creations.length > 0 ? 
-                Math.ceil((Date.now() - new Date(creations[0].dateAdded).getTime()) / (1000 * 60 * 60 * 24)) 
+                Math.ceil((Date.now() - new Date(creations[creations.length - 1].dateAdded).getTime()) / (1000 * 60 * 60 * 24)) 
                 : 0}
             </div>
             <div className="stat-label">Days Building</div>

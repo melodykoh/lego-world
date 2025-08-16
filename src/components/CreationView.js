@@ -36,17 +36,28 @@ function CreationView({ creation, onBack }) {
         </button>
         <h1 className="creation-title">{creation.name}</h1>
         <p className="creation-meta">
-          Added {new Date(creation.dateAdded).toLocaleDateString()} • {creation.photos.length} photo{creation.photos.length !== 1 ? 's' : ''}
+          Added {new Date(creation.dateAdded).toLocaleDateString()} • {creation.photos.length} file{creation.photos.length !== 1 ? 's' : ''}
         </p>
       </div>
 
       <div className="photo-viewer">
         <div className="main-photo-container">
-          <img 
-            src={creation.photos[currentPhotoIndex].url} 
-            alt={`${creation.name} - ${currentPhotoIndex + 1}`}
-            className="main-photo"
-          />
+          {creation.photos[currentPhotoIndex].mediaType === 'video' ? (
+            <video 
+              src={creation.photos[currentPhotoIndex].url} 
+              className="main-photo"
+              controls
+              preload="metadata"
+            >
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <img 
+              src={creation.photos[currentPhotoIndex].url} 
+              alt={`${creation.name} - ${currentPhotoIndex + 1}`}
+              className="main-photo"
+            />
+          )}
           
           {creation.photos.length > 1 && (
             <>
@@ -80,11 +91,23 @@ function CreationView({ creation, onBack }) {
                 onClick={() => goToPhoto(index)}
                 className={`thumbnail ${index === currentPhotoIndex ? 'active' : ''}`}
               >
-                <img 
-                  src={photo.url} 
-                  alt={`Thumbnail ${index + 1}`}
-                  className="thumbnail-image"
-                />
+                {photo.mediaType === 'video' ? (
+                  <div className="video-thumbnail">
+                    <video 
+                      src={photo.url} 
+                      className="thumbnail-image"
+                      preload="metadata"
+                      muted
+                    />
+                    <div className="play-overlay">▶</div>
+                  </div>
+                ) : (
+                  <img 
+                    src={photo.url} 
+                    alt={`Thumbnail ${index + 1}`}
+                    className="thumbnail-image"
+                  />
+                )}
               </button>
             ))}
           </div>

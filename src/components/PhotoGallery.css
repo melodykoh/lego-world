@@ -708,3 +708,96 @@
     gap: 2px;
   }
 }
+
+/* Video-specific styles */
+.card-image-container .video-thumbnail {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.card-image-container .video-thumbnail video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.card-image-container .play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.creation-card:hover .play-overlay {
+  background: rgba(0, 0, 0, 0.9);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Responsive video overlay sizes */
+@media (max-width: 768px) {
+  .card-image-container .play-overlay {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-image-container .play-overlay {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+}
+
+/* Video styles for photo tiles in View All mode */
+.photo-tile-container .video-thumbnail {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.photo-tile-container .video-thumbnail video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.photo-tile-container .play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.photo-tile:hover .play-overlay {
+  background: rgba(0, 0, 0, 0.9);
+  transform: translate(-50%, -50%) scale(1.1);
+}

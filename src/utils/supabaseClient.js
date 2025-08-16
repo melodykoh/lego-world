@@ -75,7 +75,8 @@ export const saveCreationToDatabase = async (creation) => {
       public_id: photo.publicId,
       name: photo.name,
       width: photo.width,
-      height: photo.height
+      height: photo.height,
+      media_type: photo.mediaType || 'image'
     }));
 
     const { error: photosError } = await supabase
@@ -117,7 +118,8 @@ export const fetchCreationsFromDatabase = async () => {
           public_id,
           name,
           width,
-          height
+          height,
+          media_type
         )
       `)
       .order('date_added', { ascending: false });
@@ -137,7 +139,8 @@ export const fetchCreationsFromDatabase = async () => {
         publicId: photo.public_id,
         name: photo.name,
         width: photo.width,
-        height: photo.height
+        height: photo.height,
+        mediaType: photo.media_type || 'image'
       }))
     }));
 

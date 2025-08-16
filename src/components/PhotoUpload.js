@@ -10,11 +10,14 @@ function PhotoUpload({ onAddCreation }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [errors, setErrors] = useState([]);
-  const [zoomedImage, setZoomedImage] = useState(null);
+  const [zoomedMedia, setZoomedMedia] = useState(null);
 
   // File validation constants
-  const ACCEPTED_FORMATS = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+  const ACCEPTED_IMAGE_FORMATS = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  const ACCEPTED_VIDEO_FORMATS = ['video/mp4', 'video/mov', 'video/avi', 'video/webm', 'video/quicktime'];
+  const ACCEPTED_FORMATS = [...ACCEPTED_IMAGE_FORMATS, ...ACCEPTED_VIDEO_FORMATS];
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB in bytes
   const MAX_FILES = 10;
 
   const validateFile = (file) => {
@@ -22,13 +25,17 @@ function PhotoUpload({ onAddCreation }) {
     
     // Check file format
     if (!ACCEPTED_FORMATS.includes(file.type.toLowerCase())) {
-      errors.push(`${file.name}: Unsupported format. Please use JPG, PNG, WebP, or GIF.`);
+      errors.push(`${file.name}: Unsupported format. Please use JPG, PNG, WebP, GIF, MP4, MOV, AVI, or WebM.`);
     }
     
-    // Check file size
-    if (file.size > MAX_FILE_SIZE) {
+    // Check file size based on type
+    const isVideo = ACCEPTED_VIDEO_FORMATS.includes(file.type.toLowerCase());
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    const maxSizeMB = isVideo ? 50 : 10;
+    
+    if (file.size > maxSize) {
       const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
-      errors.push(`${file.name}: File too large (${sizeInMB}MB). Maximum size is 10MB.`);
+      errors.push(`${file.name}: File too large (${sizeInMB}MB). Maximum size is ${maxSizeMB}MB.`);
     }
     
     return errors;
@@ -43,7 +50,7 @@ function PhotoUpload({ onAddCreation }) {
     
     // Check total file limit
     if (currentFileCount + newFiles.length > MAX_FILES) {
-      setErrors([`You can only upload up to ${MAX_FILES} photos per creation. Currently selected: ${currentFileCount}`]);
+      setErrors([`You can only upload up to ${MAX_FILES} photos/videos per creation. Currently selected: ${currentFileCount}`]);
       event.target.value = '';
       return;
     }
@@ -79,7 +86,7 @@ function PhotoUpload({ onAddCreation }) {
     const allFiles = [...selectedFiles, ...validFiles];
     setSelectedFiles(allFiles);
     setIsProcessing(true);
-    setUploadStatus(`Uploading ${validFiles.length} photo${validFiles.length > 1 ? 's' : ''}...`);
+    setUploadStatus(`Uploading ${validFiles.length} file${validFiles.length > 1 ? 's' : ''}...`);
 
     // Create unique creation ID for this entire creation
     const creationId = Date.now().toString();
@@ -92,15 +99,19 @@ function PhotoUpload({ onAddCreation }) {
     try {
       const newPreviews = await Promise.all(
         validFiles.map(async (file, index) => {
-          setUploadStatus(`Uploading photo ${index + 1} of ${validFiles.length}...`);
-          const compressedFile = await compressImage(file);
+          setUploadStatus(`Uploading file ${index + 1} of ${validFiles.length}...`);
+          
+          // Only compress images, not videos
+          const isVideo = ACCEPTED_VIDEO_FORMATS.includes(file.type.toLowerCase());
+          const processedFile = isVideo ? file : await compressImage(file);
           
           try {
             // Upload to Cloudinary with shared creation metadata
-            const cloudinaryResponse = await uploadToCloudinary(compressedFile, creationData);
+            const cloudinaryResponse = await uploadToCloudinary(processedFile, creationData);
             
             return {
-              file: compressedFile,
+              file: processedFile,
+              mediaType: isVideo ? 'video' : 'image',
               url: cloudinaryResponse.url,
               publicId: cloudinaryResponse.publicId,
               name: file.name,
@@ -115,13 +126,14 @@ function PhotoUpload({ onAddCreation }) {
               const reader = new FileReader();
               reader.onload = (e) => {
                 resolve({
-                  file: compressedFile,
+                  file: processedFile,
                   url: e.target.result,
                   name: file.name,
+                  mediaType: isVideo ? 'video' : 'image',
                   isLocal: true // Mark as local fallback
                 });
               };
-              reader.readAsDataURL(compressedFile);
+              reader.readAsDataURL(processedFile);
             });
           }
         })
@@ -169,7 +181,7 @@ function PhotoUpload({ onAddCreation }) {
     }
     
     if (previews.length === 0) {
-      alert('Please select at least one photo');
+      alert('Please select at least one photo or video');
       return;
     }
 
@@ -178,7 +190,8 @@ function PhotoUpload({ onAddCreation }) {
       name: preview.name,
       publicId: preview.publicId,
       width: preview.width,
-      height: preview.height
+      height: preview.height,
+      mediaType: preview.mediaType || 'image'
     }));
 
     // Get the creation ID from the first uploaded photo
@@ -236,7 +249,7 @@ function PhotoUpload({ onAddCreation }) {
 
         <div className="form-group">
           <label htmlFor="photos" className="form-label">
-            Photos (Select multiple photos of this creation)
+            Photos & Videos (Select multiple files of this creation)
           </label>
           <div className="file-upload-section">
             <input
@@ -244,18 +257,18 @@ function PhotoUpload({ onAddCreation }) {
               name="photos"
               type="file"
               multiple
-              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,video/mp4,video/mov,video/avi,video/webm,video/quicktime"
               onChange={handleFileSelect}
               className="file-input"
             />
             <label htmlFor="photos" className={`file-input-label ${errors.length > 0 ? 'error' : ''}`}>
-              {isProcessing ? `⏳ ${uploadStatus || 'Processing...'}` : '📷 Choose Multiple Photos'}
+              {isProcessing ? `⏳ ${uploadStatus || 'Processing...'}` : '📷 Choose Photos & Videos'}
             </label>
             <div className="file-requirements">
               <p className="requirements-text">
-                <strong>Accepted formats:</strong> JPG, PNG, WebP, GIF<br/>
-                <strong>Maximum size:</strong> 10MB per file<br/>
-                <strong>Maximum files:</strong> {MAX_FILES} photos per creation
+                <strong>Accepted formats:</strong> JPG, PNG, WebP, GIF, MP4, MOV, AVI, WebM<br/>
+                <strong>Maximum size:</strong> 10MB for images, 50MB for videos<br/>
+                <strong>Maximum files:</strong> {MAX_FILES} files per creation
               </p>
             </div>
           </div>
@@ -276,22 +289,36 @@ function PhotoUpload({ onAddCreation }) {
 
         {previews.length > 0 && (
           <div className="previews">
-            <h3 className="previews-title">Selected Photos ({previews.length})</h3>
+            <h3 className="previews-title">Selected Files ({previews.length})</h3>
             <div className="preview-grid">
               {previews.map((preview, index) => (
                 <div key={index} className="preview-item">
-                  <img 
-                    src={preview.url} 
-                    alt={`Preview ${index + 1}`}
-                    className="preview-image"
-                    onClick={() => setZoomedImage(preview.url)}
-                    style={{ cursor: 'pointer' }}
-                  />
+                  {preview.mediaType === 'video' ? (
+                    <div className="video-thumbnail">
+                      <video 
+                        src={preview.url} 
+                        className="preview-image"
+                        preload="metadata"
+                        muted
+                        onClick={() => setZoomedMedia({url: preview.url, mediaType: preview.mediaType})}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <div className="play-overlay">▶</div>
+                    </div>
+                  ) : (
+                    <img 
+                      src={preview.url} 
+                      alt={`Preview ${index + 1}`}
+                      className="preview-image"
+                      onClick={() => setZoomedMedia({url: preview.url, mediaType: preview.mediaType})}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={() => removePreview(index)}
                     className="remove-btn"
-                    title="Remove photo"
+                    title="Remove file"
                   >
                     ✕
                   </button>
@@ -307,20 +334,31 @@ function PhotoUpload({ onAddCreation }) {
       </form>
 
       {/* Zoom Modal */}
-      {zoomedImage && (
+      {zoomedMedia && (
         <div 
           className="zoom-modal"
-          onClick={() => setZoomedImage(null)}
+          onClick={() => setZoomedMedia(null)}
         >
           <div className="zoom-content">
-            <img 
-              src={zoomedImage} 
-              alt="Zoomed view"
-              className="zoom-image"
-            />
+            {zoomedMedia.mediaType === 'video' ? (
+              <video 
+                src={zoomedMedia.url} 
+                className="zoom-image"
+                controls
+                autoPlay
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <img 
+                src={zoomedMedia.url} 
+                alt="Zoomed view"
+                className="zoom-image"
+              />
+            )}
             <button 
               className="zoom-close"
-              onClick={() => setZoomedImage(null)}
+              onClick={() => setZoomedMedia(null)}
             >
               ✕
             </button>
