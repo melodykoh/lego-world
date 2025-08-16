@@ -6,7 +6,7 @@ import PhotoGallery from './components/PhotoGallery';
 import CreationView from './components/CreationView';
 import Login from './components/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { fetchCreationsFromCloudinary, updateCreationNameInCloud, deleteCreation } from './utils/cloudinaryUtils';
+import { fetchCreationsFromCloudinary, updateCreationNameInCloud, deleteCreation, addMediaToExistingCreation, removeMediaFromCreation } from './utils/cloudinaryUtils';
 
 function AppContent() {
   const { user, loading, signOut, isAuthenticated, isAdmin } = useAuth();
@@ -109,6 +109,40 @@ function AppContent() {
     }
   };
 
+  const addMediaToCreation = async (creationId, files) => {
+    try {
+      await addMediaToExistingCreation(creationId, files);
+      // Refresh the list to show new media
+      const updatedCreations = await fetchCreationsFromCloudinary();
+      setLegoCreations(updatedCreations);
+      // Update selected creation if it's the one being modified
+      if (selectedCreation && selectedCreation.id === creationId) {
+        const updatedCreation = updatedCreations.find(c => c.id === creationId);
+        setSelectedCreation(updatedCreation);
+      }
+    } catch (error) {
+      console.error('Error adding media to creation:', error);
+      throw error; // Re-throw to let CreationView handle the error display
+    }
+  };
+
+  const deleteMediaFromCreation = async (creationId, mediaUrl, mediaIndex) => {
+    try {
+      await removeMediaFromCreation(creationId, mediaUrl);
+      // Refresh the list to reflect deletion
+      const updatedCreations = await fetchCreationsFromCloudinary();
+      setLegoCreations(updatedCreations);
+      // Update selected creation if it's the one being modified
+      if (selectedCreation && selectedCreation.id === creationId) {
+        const updatedCreation = updatedCreations.find(c => c.id === creationId);
+        setSelectedCreation(updatedCreation);
+      }
+    } catch (error) {
+      console.error('Error deleting media from creation:', error);
+      alert('Failed to delete media. Please try again.');
+    }
+  };
+
   const viewCreation = (creation) => {
     setSelectedCreation(creation);
     setCurrentView('creation');
@@ -147,9 +181,6 @@ function AppContent() {
           creations={legoCreations} 
           onViewCreation={viewCreation} 
           onNavigateToUpload={() => navigateToView('upload')}
-          onEditCreation={isAdmin ? editCreationName : null}
-          onDeleteCreation={isAdmin ? removeCreation : null}
-          isAuthenticated={isAdmin}
         />;
       case 'upload':
         if (!isAdmin) {
@@ -161,7 +192,15 @@ function AppContent() {
       case 'login':
         return <Login onSignIn={() => navigateToView('home')} />;
       case 'creation':
-        return <CreationView creation={selectedCreation} onBack={() => setCurrentView('gallery')} />;
+        return <CreationView 
+          creation={selectedCreation} 
+          onBack={() => setCurrentView('gallery')}
+          onEditCreation={isAdmin ? editCreationName : null}
+          onDeleteCreation={isAdmin ? removeCreation : null}
+          onAddMedia={isAdmin ? addMediaToCreation : null}
+          onDeleteMedia={isAdmin ? deleteMediaFromCreation : null}
+          isAuthenticated={isAdmin}
+        />;
       default:
         return <Home 
           creations={legoCreations}

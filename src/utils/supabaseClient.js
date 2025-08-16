@@ -214,3 +214,70 @@ export const deleteCreationFromDatabase = async (creationId) => {
     throw error;
   }
 };
+
+// Add media to existing creation
+export const addMediaToCreation = async (creationId, mediaArray) => {
+  if (!supabase) {
+    console.error('Supabase client not initialized');
+    throw new Error('Database not available');
+  }
+  
+  try {
+    console.log('🔄 Adding media to creation:', { creationId, mediaCount: mediaArray.length });
+    
+    // Insert new media records
+    const mediaInserts = mediaArray.map(media => ({
+      creation_id: creationId,
+      url: media.url,
+      public_id: media.publicId,
+      name: media.name,
+      width: media.width,
+      height: media.height,
+      media_type: media.mediaType || 'image'
+    }));
+
+    const { data, error } = await supabase
+      .from('photos')
+      .insert(mediaInserts)
+      .select();
+
+    if (error) {
+      console.error('Error adding media to creation:', error);
+      throw error;
+    }
+
+    console.log('✅ Added', mediaArray.length, 'media files to creation:', creationId);
+    return data;
+  } catch (error) {
+    console.error('Error adding media to creation:', error);
+    throw error;
+  }
+};
+
+// Delete individual media from creation
+export const deleteMediaFromCreation = async (creationId, mediaUrl) => {
+  if (!supabase) {
+    console.error('Supabase client not initialized');
+    throw new Error('Database not available');
+  }
+  
+  try {
+    console.log('🔄 Deleting media from creation:', { creationId, mediaUrl });
+    
+    const { error } = await supabase
+      .from('photos')
+      .delete()
+      .eq('creation_id', creationId)
+      .eq('url', mediaUrl);
+
+    if (error) {
+      console.error('Error deleting media from creation:', error);
+      throw error;
+    }
+
+    console.log('✅ Deleted media from creation:', creationId);
+  } catch (error) {
+    console.error('Error deleting media from creation:', error);
+    throw error;
+  }
+};

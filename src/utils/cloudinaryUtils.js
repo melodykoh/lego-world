@@ -1,5 +1,5 @@
 import CryptoJS from 'crypto-js';
-import { saveCreationToDatabase, fetchCreationsFromDatabase, updateCreationName, deleteCreationFromDatabase } from './supabaseClient';
+import { saveCreationToDatabase, fetchCreationsFromDatabase, updateCreationName, deleteCreationFromDatabase, addMediaToCreation, deleteMediaFromCreation } from './supabaseClient';
 
 // Update sync status in UI
 const updateSyncStatus = (status, message) => {
@@ -211,6 +211,83 @@ export const deleteCreation = async (creationId) => {
     console.log('✅ Deleted creation from both database and cache');
   } catch (error) {
     console.error('Error deleting creation:', error);
+    throw error;
+  }
+};
+
+// Add media to existing creation
+export const addMediaToExistingCreation = async (creationId, files) => {
+  try {
+    console.log('🔄 Adding media to existing creation:', { creationId, fileCount: files.length });
+    
+    // Upload files to Cloudinary
+    const uploadPromises = files.map(async (file) => {
+      // Only compress images, not videos
+      const isVideo = file.type.startsWith('video/');
+      const processedFile = isVideo ? file : await require('./imageUtils').compressImage(file);
+      
+      try {
+        // Upload to Cloudinary with creation metadata
+        const cloudinaryResponse = await uploadToCloudinary(processedFile, { creationId });
+        
+        return {
+          url: cloudinaryResponse.url,
+          publicId: cloudinaryResponse.publicId,
+          name: file.name,
+          width: cloudinaryResponse.width,
+          height: cloudinaryResponse.height,
+          mediaType: isVideo ? 'video' : 'image'
+        };
+      } catch (uploadError) {
+        console.error('Failed to upload to Cloudinary:', uploadError);
+        throw uploadError;
+      }
+    });
+    
+    const uploadedMedia = await Promise.all(uploadPromises);
+    
+    // Save to database
+    await addMediaToCreation(creationId, uploadedMedia);
+    
+    // Update local cache
+    const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
+    const creationIndex = cached.findIndex(c => c.id === creationId);
+    if (creationIndex >= 0) {
+      cached[creationIndex].photos = [...cached[creationIndex].photos, ...uploadedMedia];
+      localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(cached));
+    }
+    
+    console.log('✅ Added media to creation and updated cache');
+    return uploadedMedia;
+  } catch (error) {
+    console.error('Error adding media to creation:', error);
+    throw error;
+  }
+};
+
+// Delete media from creation
+export const removeMediaFromCreation = async (creationId, mediaUrl, publicId) => {
+  try {
+    console.log('🔄 Removing media from creation:', { creationId, mediaUrl });
+    
+    // Delete from database first
+    await deleteMediaFromCreation(creationId, mediaUrl);
+    
+    // Update local cache
+    const cached = JSON.parse(localStorage.getItem(CREATIONS_CACHE_KEY) || '[]');
+    const creationIndex = cached.findIndex(c => c.id === creationId);
+    if (creationIndex >= 0) {
+      cached[creationIndex].photos = cached[creationIndex].photos.filter(photo => photo.url !== mediaUrl);
+      localStorage.setItem(CREATIONS_CACHE_KEY, JSON.stringify(cached));
+    }
+    
+    // TODO: Delete from Cloudinary if we have public_id
+    // This would require Cloudinary destroy API which needs server-side implementation
+    // For now, we'll just remove from database/cache
+    
+    console.log('✅ Removed media from creation and updated cache');
+  } catch (error) {
+    console.error('Error removing media from creation:', error);
     throw error;
   }
 };

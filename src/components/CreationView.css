@@ -9,6 +9,17 @@
   margin-bottom: 2rem;
 }
 
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.edit-mode-btn {
+  /* Inherits all styles from .back-btn */
+}
+
 .back-btn {
   background: #f8f9fa;
   border: 2px solid #e1e5e9;
@@ -27,11 +38,46 @@
   transform: translateY(-2px);
 }
 
+.title-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .creation-title {
   font-size: 2rem;
   color: #333;
   margin-bottom: 0.5rem;
   font-weight: bold;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 18px;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.icon-btn.delete-icon:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
 }
 
 .creation-meta {
@@ -120,6 +166,11 @@
   flex-wrap: wrap;
 }
 
+.thumbnail-container {
+  position: relative;
+  display: inline-block;
+}
+
 .thumbnail {
   background: none;
   border: 3px solid transparent;
@@ -130,6 +181,30 @@
   width: 80px;
   height: 80px;
   flex-shrink: 0;
+}
+
+.delete-media-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  transition: background 0.3s ease;
+  z-index: 10;
+}
+
+.delete-media-btn:hover {
+  background: rgba(255, 0, 0, 1);
 }
 
 .thumbnail:hover {
@@ -147,6 +222,111 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* Add Media Section Styles */
+.add-media-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.add-media-btn {
+  margin-bottom: 1rem;
+}
+
+.selected-files-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.file-count {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.upload-selected-btn {
+  background: linear-gradient(145deg, #ff6b35, #e55a2b) !important;
+  color: white !important;
+  border-color: #e55a2b !important;
+}
+
+.upload-selected-btn:hover {
+  background: linear-gradient(145deg, #e55a2b, #d14d26) !important;
+  transform: translateY(-2px);
+}
+
+/* Edit Name Section Styles */
+.edit-name-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.edit-name-input {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  background: #f8f9fa;
+  transition: border-color 0.3s ease;
+  min-width: 250px;
+}
+
+.edit-name-input:focus {
+  outline: none;
+  border-color: #ff6b35;
+  background: white;
+}
+
+.edit-name-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.save-btn, .cancel-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #e1e5e9;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.save-btn {
+  background: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.save-btn:hover {
+  background: #c3e6cb;
+  border-color: #b1dfbb;
+  transform: translateY(-2px);
+}
+
+.cancel-btn {
+  background: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
+.cancel-btn:hover {
+  background: #f5c6cb;
+  border-color: #f1b0b7;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
@@ -184,6 +364,20 @@
   
   .photo-thumbnails {
     gap: 0.5rem;
+  }
+  
+  .icon-btn {
+    font-size: 20px;
+    padding: 6px;
+  }
+  
+  .title-section {
+    gap: 0.5rem;
+  }
+  
+  .edit-name-input {
+    min-width: 200px;
+    font-size: 1.1rem;
   }
 }
 
