@@ -33,7 +33,13 @@ function Home({ creations, onNavigateToGallery, onNavigateToUpload, onViewCreati
           <div className="recent-section">
             <h3 className="section-title">Recent Creations</h3>
           <div className="recent-grid">
-            {recentCreations.map((creation) => (
+            {recentCreations.map((creation) => {
+              // CRITICAL FIX: Skip creations with no photos to prevent white screen
+              if (!creation.photos || creation.photos.length === 0) {
+                return null;
+              }
+              
+              return (
               <div 
                 key={creation.id} 
                 className="recent-card"
@@ -63,7 +69,8 @@ function Home({ creations, onNavigateToGallery, onNavigateToUpload, onViewCreati
                   </p>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
           
           {creations.length > 3 && (

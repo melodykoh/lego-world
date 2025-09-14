@@ -9,6 +9,7 @@ function CreationView({ creation, onBack, onEditCreation, onDeleteCreation, onAd
   const [editingName, setEditingName] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showFullScreen, setShowFullScreen] = useState(false);
 
   // Reset edit mode when creation changes (don't persist edit state)
   useEffect(() => {
@@ -171,6 +172,8 @@ function CreationView({ creation, onBack, onEditCreation, onDeleteCreation, onAd
               className="main-photo"
               controls
               preload="metadata"
+              onClick={() => setShowFullScreen(true)}
+              style={{ cursor: 'pointer' }}
             >
               Your browser does not support the video tag.
             </video>
@@ -179,6 +182,8 @@ function CreationView({ creation, onBack, onEditCreation, onDeleteCreation, onAd
               src={creation.photos[currentPhotoIndex].url} 
               alt={`${creation.name} - ${currentPhotoIndex + 1}`}
               className="main-photo"
+              onClick={() => setShowFullScreen(true)}
+              style={{ cursor: 'pointer' }}
             />
           )}
           
@@ -269,6 +274,11 @@ function CreationView({ creation, onBack, onEditCreation, onDeleteCreation, onAd
           </div>
         )}
       </div>
+
+      {/* Full Screen Viewer - Temporarily disabled */}
+      {false && showFullScreen && (
+        <div>FullScreenViewer temporarily disabled for testing</div>
+      )}
     </div>
   );
 }

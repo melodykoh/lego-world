@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import './PhotoGallery.css';
 import { getMediaThumbnail } from '../utils/videoUtils';
 
 function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
   const [viewMode, setViewMode] = useState('by-creation'); // 'by-creation' or 'view-all'
-  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [showFullScreen, setShowFullScreen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  
-  // Touch/swipe handling hooks - must be at top level
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+  const [selectedCreationName, setSelectedCreationName] = useState('');
 
   // Flatten all photos with creation info for "View All" mode
   const allPhotos = creations.flatMap(creation => 
@@ -22,81 +19,14 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
   );
 
   const openPhotoModal = (photo, index) => {
-    setSelectedPhoto(photo);
     setCurrentPhotoIndex(index);
+    setSelectedCreationName(photo.creationName || '');
+    setShowFullScreen(true);
   };
-
-  const navigatePhoto = useCallback((direction) => {
-    if (allPhotos.length === 0) return;
-    
-    let newIndex;
-    if (direction === 'next') {
-      newIndex = currentPhotoIndex < allPhotos.length - 1 ? currentPhotoIndex + 1 : 0;
-    } else {
-      newIndex = currentPhotoIndex > 0 ? currentPhotoIndex - 1 : allPhotos.length - 1;
-    }
-    
-    setCurrentPhotoIndex(newIndex);
-    setSelectedPhoto(allPhotos[newIndex]);
-  }, [allPhotos, currentPhotoIndex]);
 
   const closePhotoModal = () => {
-    setSelectedPhoto(null);
+    setShowFullScreen(false);
     setCurrentPhotoIndex(0);
-  };
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (!selectedPhoto) return;
-      
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault();
-          navigatePhoto('prev');
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          navigatePhoto('next');
-          break;
-        case 'Escape':
-          event.preventDefault();
-          closePhotoModal();
-          break;
-        default:
-          break;
-      }
-    };
-
-    if (selectedPhoto) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [selectedPhoto, navigatePhoto]);
-
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      navigatePhoto('next');
-    } else if (isRightSwipe) {
-      navigatePhoto('prev');
-    }
   };
 
   if (creations.length === 0) {
@@ -152,7 +82,13 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
 
   const renderByCreationGrid = () => (
     <div className="gallery-grid">
-      {creations.map((creation) => (
+      {creations.map((creation) => {
+        // CRITICAL FIX: Skip creations with no photos to prevent white screen
+        if (!creation.photos || creation.photos.length === 0) {
+          return null;
+        }
+        
+        return (
           <div 
             key={creation.id} 
             className="creation-card"
@@ -195,7 +131,8 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
               </p>
             </div>
           </div>
-        ))}
+        );
+      })}
     </div>
   );
 
@@ -231,79 +168,9 @@ function PhotoGallery({ creations, onViewCreation, onNavigateToUpload }) {
       
       {viewMode === 'by-creation' ? renderByCreationGrid() : renderViewAllGrid()}
 
-      {/* Photo Modal */}
-      {selectedPhoto && (
-        <div className="photo-modal" onClick={closePhotoModal}>
-          <div 
-            className="photo-modal-content" 
-            onClick={e => e.stopPropagation()}
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
-            <button className="modal-close-btn" onClick={closePhotoModal}>✕</button>
-            
-            {/* Navigation arrows */}
-            {allPhotos.length > 1 && (
-              <>
-                <button 
-                  className="modal-nav-btn modal-nav-prev" 
-                  onClick={() => navigatePhoto('prev')}
-                  title="Previous photo"
-                >
-                  ‹
-                </button>
-                <button 
-                  className="modal-nav-btn modal-nav-next" 
-                  onClick={() => navigatePhoto('next')}
-                  title="Next photo"
-                >
-                  ›
-                </button>
-              </>
-            )}
-            
-            {/* Photo counter */}
-            {allPhotos.length > 1 && (
-              <div className="modal-photo-counter">
-                {currentPhotoIndex + 1} of {allPhotos.length}
-              </div>
-            )}
-            
-            {selectedPhoto.mediaType === 'video' ? (
-              <video 
-                src={selectedPhoto.url} 
-                className="modal-photo"
-                controls
-                autoPlay
-              >
-                Your browser does not support the video tag.
-              </video>
-            ) : (
-              <img 
-                src={selectedPhoto.url} 
-                alt={selectedPhoto.creationName}
-                className="modal-photo"
-              />
-            )}
-            <div className="modal-info">
-              <h3 className="modal-creation-name">{selectedPhoto.creationName}</h3>
-              <p className="modal-date">
-                Added {new Date(selectedPhoto.dateAdded).toLocaleDateString()}
-              </p>
-              <button 
-                className="view-creation-btn"
-                onClick={() => {
-                  const creation = creations.find(c => c.id === selectedPhoto.creationId);
-                  onViewCreation(creation);
-                  closePhotoModal();
-                }}
-              >
-                View Full Creation
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Full Screen Viewer - Temporarily disabled */}
+      {false && showFullScreen && (
+        <div>FullScreenViewer temporarily disabled for testing</div>
       )}
     </div>
   );
