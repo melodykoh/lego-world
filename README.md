@@ -53,8 +53,8 @@ REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 3. Set up database:
 ```bash
 # Run the database setup scripts in Supabase SQL editor
-# 1. database-setup.sql
-# 2. database-video-migration.sql (if needed)
+# 1. database/setup/database-setup.sql
+# 2. database/migrations/database-video-migration.sql (if needed)
 ```
 
 4. Start development server:

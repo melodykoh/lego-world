@@ -12,6 +12,32 @@ This file provides comprehensive guidance to Claude Code (claude.ai/code) when w
 - **Authentication**: Supabase Auth with admin-only access model
 - **Architecture**: Progressive Web App with offline resilience and cross-device sync
 
+## Session Status (September 14, 2025 - COMPLETED)
+
+**FINAL STATE**: ✅ Critical production bug fixed and deployed to production
+- **Branch**: Merged fix from `feature/fullscreen-photo-viewer` to `main` 
+- **Deployment**: Auto-deployed via Vercel from main branch
+- **Status**: Production site should now load without white screen errors
+
+**COMPLETED THIS SESSION**:
+✅ **Critical White Screen Fix**: Added defensive checks in Home.js and PhotoGallery.js to skip creations with empty photos arrays
+✅ **Migration Logic Bug Fix**: Added existence check before database insertion in cloudinaryUtils.js
+✅ **Database Cleanup**: Removed 12 duplicate photo records (11 batch + 1 Lloyd's dragon)
+✅ **Database Schema Hardening**: Added unique constraints to prevent future duplicates
+✅ **Comprehensive Testing**: Verified fix with simulated corrupted data locally
+✅ **Production Deployment**: Deployed via Vercel auto-deployment from main branch
+✅ **Documentation**: Added deployment process documentation for feature branches
+
+**ROOT CAUSE CONFIRMED**: Migration logic bug from August 4th, 2025 caused:
+- Failed uploads creating database entries with empty photos arrays (white screen)
+- Migration code re-inserting existing creations without duplicate checks (database duplicates)
+
+**PREVENTION MEASURES ACTIVE**:
+- Defensive rendering prevents crashes on corrupted data
+- Migration logic now checks for existing records before insertion
+- Database unique constraints prevent duplicate photo records
+- Comprehensive audit system tracks all database changes
+
 ## Recent Major Features (Latest Updates)
 
 ### Media Management System
@@ -31,6 +57,73 @@ This file provides comprehensive guidance to Claude Code (claude.ai/code) when w
 - **Build for production**: `npm run build`
 - **Run tests**: `npm test`
 - **Install dependencies**: `npm install`
+
+## Deployment Process
+
+### Vercel Auto-Deployment Configuration
+This project uses **Vercel** with automatic deployment configured to watch the `main` branch. Changes pushed to `main` trigger automatic builds and deployments to production.
+
+### Deploying from Feature Branches
+
+**Standard Feature Development Flow:**
+1. Create and work on feature branch: `git checkout -b feature/your-feature-name`
+2. Commit and push feature work: `git push origin feature/your-feature-name`
+3. **Feature branches do NOT auto-deploy** - they remain in development
+
+**Production Deployment Process:**
+```bash
+# Method 1: Direct merge to main (for tested features)
+git checkout main
+git merge feature/your-feature-name
+git push origin main  # Triggers Vercel auto-deployment
+
+# Method 2: Pull Request workflow (recommended for code review)
+# 1. Push feature branch to GitHub
+# 2. Create PR from feature branch to main
+# 3. Review and merge PR
+# 4. Merged main branch triggers auto-deployment
+```
+
+### Critical Production Hotfixes
+For urgent production fixes that bypass normal review:
+
+```bash
+# 1. Create hotfix branch from main
+git checkout main
+git pull origin main
+git checkout -b hotfix/critical-issue-name
+
+# 2. Make critical fixes and test locally
+# 3. Commit fixes
+git commit -m "🚨 HOTFIX: Description of critical fix"
+
+# 4. Deploy immediately to production
+git checkout main
+git merge hotfix/critical-issue-name
+git push origin main  # Triggers immediate Vercel deployment
+
+# 5. Clean up
+git branch -d hotfix/critical-issue-name
+```
+
+### Deployment Verification
+After pushing to main:
+1. **Check Vercel dashboard** for deployment status
+2. **Wait 2-5 minutes** for build and deployment completion
+3. **Test production site** to verify changes deployed correctly
+4. **Monitor for any deployment errors** in Vercel logs
+
+### Branch Management Best Practices
+- **`main`** - Production branch, auto-deploys to live site
+- **`feature/*`** - Development branches, no auto-deployment  
+- **`hotfix/*`** - Critical fixes, merge directly to main
+- **`fix/*`** - Bug fixes, follow standard PR workflow
+
+### Important Notes
+- **Only `main` branch triggers deployment** - feature branches are safe for development
+- **Test locally before merging to main** - broken code will deploy to production
+- **Hotfixes bypass review** - use only for critical production issues
+- **Feature branches can be long-lived** - they don't affect production until merged
 
 ## Architecture & Key Components
 
@@ -134,9 +227,9 @@ REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_cloudinary_upload_preset
 
 ### Database Setup
 Run SQL scripts in this order:
-1. `database-setup.sql`: Creates tables, indexes, and RLS policies
-2. `database-video-migration.sql`: Adds media_type column support
-3. `database-fix.sql`: Any additional fixes or updates
+1. `database/setup/database-setup.sql`: Creates tables, indexes, and RLS policies
+2. `database/migrations/database-video-migration.sql`: Adds media_type column support
+3. `database/maintenance/database-fix.sql`: Any additional fixes or updates
 
 ### CSS Architecture & Styling Patterns
 
