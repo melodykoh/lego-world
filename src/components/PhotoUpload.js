@@ -84,8 +84,7 @@ function PhotoUpload({ onAddCreation }) {
       return;
     }
     
-    const allFiles = [...selectedFiles, ...validFiles];
-    setSelectedFiles(allFiles);
+    setSelectedFiles(validFiles);
     setIsProcessing(true);
     setUploadStatus(`Uploading ${validFiles.length} file${validFiles.length > 1 ? 's' : ''}...`);
 
@@ -139,7 +138,7 @@ function PhotoUpload({ onAddCreation }) {
           }
         })
       );
-      setPreviews(prev => [...prev, ...newPreviews]);
+      setPreviews(newPreviews);
     } catch (error) {
       console.error('Error processing images:', error);
       setErrors(prev => [...prev, 'Error processing some images. Please try again.']);
